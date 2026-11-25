@@ -1,6 +1,5 @@
 # ihr-speech-service, mock/TTS image (AI Specification v1.1 §3.4).
-# The GPU STT image (nvidia/cuda:12.x-cudnn-runtime + Python 3.12 + CTranslate2 + baked
-# large-v3-turbo model) is added in Sprint 3 with the faster-whisper provider.
+# The GPU STT image is Dockerfile.stt (CUDA + faster-whisper + baked large-v3-turbo).
 #   docker build -f services/ihr-speech-service/Dockerfile -t ihr-speech-service .
 FROM python:3.12-slim-trixie
 

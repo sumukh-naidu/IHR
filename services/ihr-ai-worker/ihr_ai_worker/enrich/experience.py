@@ -57,3 +57,27 @@ def experience(history: list[dict], current_month: str) -> tuple[int | None, int
         iv = role_interval(history[0], current_month)
         recent = iv[1] - iv[0] + 1 if iv else None
     return total, recent, undated
+
+
+def skill_months(history: list[dict], skill: str, current_month: str, canonical) -> int | None:
+    """Months of dated roles whose skillsMentioned include the skill (A-20 skill-specific evidence)."""
+    target = canonical(skill).lower()
+    ivs = [iv for e in history
+           if any(canonical(s).lower() == target for s in e.get("skillsMentioned") or [])
+           and (iv := role_interval(e, current_month)) is not None]
+    return merged_months(ivs) if ivs else None
+
+
+PARTIAL_SHARE = 0.75
+
+
+def experience_status(months: int | None, min_months: int) -> str:
+    """A-20: >= min -> MATCHED; >= 75 % -> PARTIAL; below -> MISSING; no dated history -> UNKNOWN.
+    Exceeding experienceMaxMonths is never penalised."""
+    if months is None:
+        return "UNKNOWN"
+    if months >= min_months:
+        return "MATCHED"
+    if months >= PARTIAL_SHARE * min_months:
+        return "PARTIAL"
+    return "MISSING"

@@ -48,7 +48,7 @@ Same adapter as Kimi (JSON mode, retries, breaker). Eval gate results only count
 
 Both need `KAFKA_BOOTSTRAP_SERVERS` and the `S3_*` variables (§3.3).
 
-## Status (Sprint 2)
+## Status (Sprint 3)
 
 Done: contracts, fixtures, worker framework, Kimi adapter (retries, circuit breaker, rate
 limit, error mapping, repair once), mock mode for every task, prompt loader (A-11), debug
@@ -62,4 +62,11 @@ text (§10), the shared evidence verifier (A-23), CV_PARSE validation and enrich
 Code: `ihr_ai_worker/{extraction,privacy,enrich,pipelines}/`, `evidence.py`.
 `AI_PROVIDER=kimi|local` runs the real CV_PARSE; other tasks are still fixtures.
 Open S2 items: Testcontainers integration (ClamAV EICAR, SeaweedFS, Kafka), eval on cv-48 (needs dataset).
-Next, per §15: S3 CV_MATCH and STT.
+
+Sprint 3 built: CV_MATCH (exact requirement set, quote rules, A-20 deterministic EXPERIENCE override,
+question policy A-21 with `policy/questions.py`, language policy A-22, `docs/prompts/policy_lexicon.yaml`,
+`skill_aliases.json` ~400 entries) and STT (`speech/stt.py`: PyAV 16 kHz decode, A-26 parameters,
+segment post-processing, A-27 flags, warm-up before readiness, CUDA OOM reload, `Dockerfile.stt`,
+`tools/stt_benchmark.py`). `STT_PROVIDER=faster-whisper` runs the real model.
+Open S3 items: L4 GPU benchmark (needs GPU + audio-40), CV_MATCH eval on cv-48 rubrics (needs dataset).
+Next, per §15: S4 TTS and INTERVIEW_PLAN.

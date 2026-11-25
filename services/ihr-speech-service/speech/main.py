@@ -10,15 +10,24 @@ from ihr_worker_common.processor import Processor
 from ihr_worker_common.runner import KafkaRunner
 from ihr_worker_common.storage import S3Storage
 
+from .stt import TranscriptionHandler, WhisperConfig, WhisperEngine
 from .stt_mock import MockTranscriptionHandler
 from .tts_mock import MockSynthesisHandler
 
 
+ENGINE: WhisperEngine | None = None
+
+
 def build_handler(role: str):
+    global ENGINE
     if role == "stt":
-        if os.environ.get("STT_PROVIDER", "mock") != "mock":
-            raise SystemExit("STT_PROVIDER=faster-whisper is delivered in Sprint 3; use STT_PROVIDER=mock")
-        return MockTranscriptionHandler()
+        provider = os.environ.get("STT_PROVIDER", "mock")
+        if provider == "mock":
+            return MockTranscriptionHandler()
+        if provider != "faster-whisper":
+            raise SystemExit("STT_PROVIDER must be faster-whisper or mock")
+        ENGINE = WhisperEngine(WhisperConfig.from_env())
+        return TranscriptionHandler(ENGINE)
     if role == "tts":
         if os.environ.get("TTS_PROVIDER_PRIMARY", "mock") != "mock":
             raise SystemExit("Azure/Polly TTS is delivered in Sprint 4; use TTS_PROVIDER_PRIMARY=mock")
@@ -32,7 +41,12 @@ def main() -> int:
     handler = build_handler(role)
     concurrency = int(os.environ.get("WHISPER_NUM_WORKERS", "2")) if role == "stt" else 8
     processor = Processor(handler, S3Storage(), "ihr-speech-service", "ihr_speech", max_workers=concurrency)
-    serve_in_background(build_app(f"ihr-speech-{role}"), int(os.environ.get("HEALTH_PORT", "8080")))
+    if ENGINE is not None:   # health first so liveness answers while the model loads; ready only after warm-up
+        serve_in_background(build_app(f"ihr-speech-{role}", ready=lambda: ENGINE.ready, alive=lambda: ENGINE.alive),
+                            int(os.environ.get("HEALTH_PORT", "8080")))
+        ENGINE.start()
+    else:
+        serve_in_background(build_app(f"ihr-speech-{role}"), int(os.environ.get("HEALTH_PORT", "8080")))
     runner = KafkaRunner([processor], f"ihr-speech-{role}", concurrency)
     runner.install_signal_handlers()
     runner.run()

@@ -1,67 +1,884 @@
 {
-  "$comment": "A-19 canonical skill name -> aliases. Seed set; extended to ~300 entries by the AI team via pull request (CV_MATCH, Sprint 3).",
-  "JavaScript": ["JS", "ECMAScript", "ES6"],
-  "TypeScript": ["TS"],
-  "Python": ["Python3", "Python 3"],
-  "Java": ["Core Java", "Java SE"],
-  "C#": ["C Sharp", "CSharp"],
-  "C++": ["CPP", "Cplusplus"],
-  "Go": ["Golang"],
-  "Kotlin": [],
-  "Node.js": ["Node", "NodeJS", "Node JS"],
-  "React": ["React.js", "ReactJS"],
-  "Angular": ["AngularJS", "Angular.js"],
-  "Vue.js": ["Vue", "VueJS"],
-  "Spring Boot": ["SpringBoot", "Spring-Boot"],
-  "Spring": ["Spring Framework"],
-  ".NET": ["dotnet", "dot net", ".NET Core", "ASP.NET"],
-  "Django": [],
-  "Flask": [],
-  "FastAPI": [],
-  "Kafka": ["Apache Kafka"],
-  "RabbitMQ": [],
-  "PostgreSQL": ["Postgres", "Postgre SQL", "PSQL"],
-  "MySQL": [],
-  "Microsoft SQL Server": ["MSSQL", "SQL Server", "MS SQL"],
-  "Oracle Database": ["Oracle DB", "Oracle"],
-  "MongoDB": ["Mongo"],
-  "Redis": [],
-  "Elasticsearch": ["Elastic Search", "ES"],
-  "SQL": [],
-  "Docker": [],
-  "Kubernetes": ["K8s", "K8S", "kube"],
-  "Terraform": [],
-  "Ansible": [],
-  "Jenkins": [],
-  "GitHub Actions": [],
-  "Git": [],
-  "AWS": ["Amazon Web Services"],
-  "Microsoft Azure": ["Azure"],
-  "Google Cloud Platform": ["GCP", "Google Cloud"],
-  "Linux": [],
-  "REST APIs": ["REST", "RESTful APIs", "REST API", "RESTful"],
-  "GraphQL": [],
-  "Microservices": ["Micro-services", "Microservice architecture"],
-  "CI/CD": ["CICD", "Continuous Integration"],
-  "Machine Learning": ["ML"],
-  "Deep Learning": ["DL"],
-  "Natural Language Processing": ["NLP"],
-  "TensorFlow": [],
-  "PyTorch": [],
-  "Pandas": [],
-  "Apache Spark": ["Spark", "PySpark"],
-  "Power BI": ["PowerBI"],
-  "Tableau": [],
-  "Microsoft Excel": ["Excel", "MS Excel"],
-  "HTML": ["HTML5"],
-  "CSS": ["CSS3"],
-  "Agile": ["Agile methodology"],
-  "Scrum": [],
-  "JIRA": ["Jira"],
-  "Selenium": [],
-  "JUnit": [],
-  "Hibernate": [],
-  "Android": [],
-  "iOS": [],
-  "Swift": []
+ "$comment": "A-19 canonical skill name -> aliases (~300 entries). Maintained by the AI team via pull request.",
+ "JavaScript": [
+  "JS",
+  "ECMAScript",
+  "ES6"
+ ],
+ "TypeScript": [
+  "TS"
+ ],
+ "Python": [
+  "Python3",
+  "Python 3"
+ ],
+ "Java": [
+  "Core Java",
+  "Java SE"
+ ],
+ "C#": [
+  "C Sharp",
+  "CSharp"
+ ],
+ "C++": [
+  "CPP",
+  "Cplusplus"
+ ],
+ "Go": [
+  "Golang"
+ ],
+ "Kotlin": [],
+ "Node.js": [
+  "Node",
+  "NodeJS",
+  "Node JS"
+ ],
+ "React": [
+  "React.js",
+  "ReactJS"
+ ],
+ "Angular": [
+  "AngularJS",
+  "Angular.js"
+ ],
+ "Vue.js": [
+  "Vue",
+  "VueJS"
+ ],
+ "Spring Boot": [
+  "SpringBoot",
+  "Spring-Boot"
+ ],
+ "Spring": [
+  "Spring Framework"
+ ],
+ ".NET": [
+  "dotnet",
+  "dot net",
+  ".NET Core",
+  "ASP.NET"
+ ],
+ "Django": [],
+ "Flask": [],
+ "FastAPI": [],
+ "Kafka": [
+  "Apache Kafka"
+ ],
+ "RabbitMQ": [],
+ "PostgreSQL": [
+  "Postgres",
+  "Postgre SQL",
+  "PSQL"
+ ],
+ "MySQL": [],
+ "Microsoft SQL Server": [
+  "MSSQL",
+  "SQL Server",
+  "MS SQL"
+ ],
+ "Oracle Database": [
+  "Oracle DB",
+  "Oracle"
+ ],
+ "MongoDB": [
+  "Mongo"
+ ],
+ "Redis": [],
+ "Elasticsearch": [
+  "Elastic Search",
+  "ES"
+ ],
+ "SQL": [],
+ "Docker": [],
+ "Kubernetes": [
+  "K8s",
+  "kube"
+ ],
+ "Terraform": [],
+ "Ansible": [],
+ "Jenkins": [],
+ "GitHub Actions": [],
+ "Git": [],
+ "AWS": [
+  "Amazon Web Services"
+ ],
+ "Microsoft Azure": [
+  "Azure"
+ ],
+ "Google Cloud Platform": [
+  "GCP",
+  "Google Cloud"
+ ],
+ "Linux": [],
+ "REST APIs": [
+  "REST",
+  "RESTful APIs",
+  "REST API",
+  "RESTful"
+ ],
+ "GraphQL": [],
+ "Microservices": [
+  "Micro-services",
+  "Microservice architecture"
+ ],
+ "CI/CD": [
+  "CICD",
+  "Continuous Integration"
+ ],
+ "Machine Learning": [
+  "ML"
+ ],
+ "Deep Learning": [
+  "DL"
+ ],
+ "Natural Language Processing": [
+  "NLP"
+ ],
+ "TensorFlow": [],
+ "PyTorch": [],
+ "Pandas": [],
+ "Apache Spark": [
+  "Spark",
+  "PySpark"
+ ],
+ "Power BI": [
+  "PowerBI"
+ ],
+ "Tableau": [],
+ "Microsoft Excel": [
+  "Excel",
+  "MS Excel"
+ ],
+ "HTML": [
+  "HTML5"
+ ],
+ "CSS": [
+  "CSS3"
+ ],
+ "Agile": [
+  "Agile methodology"
+ ],
+ "Scrum": [],
+ "JIRA": [
+  "Jira"
+ ],
+ "Selenium": [],
+ "JUnit": [],
+ "Hibernate": [],
+ "Android": [],
+ "iOS": [],
+ "Swift": [],
+ "Rust": [],
+ "Ruby": [],
+ "PHP": [],
+ "Scala": [],
+ "R": [
+  "R programming",
+  "R language"
+ ],
+ "MATLAB": [],
+ "Perl": [],
+ "Bash": [
+  "Shell",
+  "bash scripting"
+ ],
+ "PowerShell": [],
+ "Dart": [],
+ "Objective-C": [
+  "ObjC"
+ ],
+ "Groovy": [],
+ "Haskell": [],
+ "Elixir": [],
+ "Lua": [],
+ "COBOL": [],
+ "Fortran": [],
+ "Julia": [],
+ "Solidity": [],
+ "VBA": [
+  "Excel VBA",
+  "Visual Basic for Applications"
+ ],
+ "Visual Basic": [
+  "VB.NET",
+  "VB"
+ ],
+ "Assembly": [
+  "ASM"
+ ],
+ "C": [
+  "C language",
+  "C programming"
+ ],
+ "PL/SQL": [
+  "PLSQL"
+ ],
+ "T-SQL": [
+  "TSQL",
+  "Transact-SQL"
+ ],
+ "Next.js": [
+  "NextJS",
+  "Next"
+ ],
+ "Nuxt.js": [
+  "Nuxt"
+ ],
+ "Svelte": [],
+ "jQuery": [],
+ "Bootstrap": [],
+ "Tailwind CSS": [
+  "Tailwind",
+  "TailwindCSS"
+ ],
+ "Sass": [
+  "SCSS"
+ ],
+ "Redux": [],
+ "Webpack": [],
+ "Vite": [],
+ "Express.js": [
+  "Express",
+  "ExpressJS"
+ ],
+ "NestJS": [
+  "Nest.js"
+ ],
+ "Ruby on Rails": [
+  "Rails",
+  "RoR"
+ ],
+ "Laravel": [],
+ "Symfony": [],
+ "ASP.NET MVC": [],
+ "Entity Framework": [
+  "EF Core"
+ ],
+ "Blazor": [],
+ "Quarkus": [],
+ "Micronaut": [],
+ "Spring MVC": [],
+ "Spring Security": [],
+ "Spring Cloud": [],
+ "Spring Batch": [],
+ "Spring Data JPA": [
+  "Spring Data"
+ ],
+ "JPA": [
+  "Java Persistence API"
+ ],
+ "Maven": [
+  "Apache Maven"
+ ],
+ "Gradle": [],
+ "Mockito": [],
+ "TestNG": [],
+ "Lombok": [],
+ "JDBC": [],
+ "Servlets": [
+  "Java Servlets"
+ ],
+ "JSP": [
+  "JavaServer Pages"
+ ],
+ "Struts": [
+  "Apache Struts"
+ ],
+ "Tomcat": [
+  "Apache Tomcat"
+ ],
+ "JBoss": [
+  "WildFly"
+ ],
+ "WebLogic": [
+  "Oracle WebLogic"
+ ],
+ "gRPC": [],
+ "WebSockets": [
+  "WebSocket"
+ ],
+ "SOAP": [
+  "SOAP web services"
+ ],
+ "OpenAPI": [
+  "Swagger"
+ ],
+ "Postman": [],
+ "OAuth 2.0": [
+  "OAuth",
+  "OAuth2"
+ ],
+ "JWT": [
+  "JSON Web Tokens"
+ ],
+ "React Native": [],
+ "Flutter": [],
+ "Xamarin": [],
+ "Ionic": [],
+ "Electron": [],
+ "Jest": [],
+ "Mocha": [],
+ "Cypress": [],
+ "Playwright": [],
+ "Pytest": [
+  "py.test"
+ ],
+ "Celery": [],
+ "SQLAlchemy": [],
+ "Pydantic": [],
+ "NumPy": [
+  "Numpy"
+ ],
+ "SciPy": [],
+ "Matplotlib": [],
+ "Seaborn": [],
+ "Plotly": [],
+ "Jupyter": [
+  "Jupyter Notebook",
+  "JupyterLab"
+ ],
+ "Scikit-learn": [
+  "sklearn",
+  "scikit learn"
+ ],
+ "Keras": [],
+ "XGBoost": [],
+ "LightGBM": [],
+ "Hugging Face Transformers": [
+  "Hugging Face",
+  "Transformers",
+  "HuggingFace"
+ ],
+ "LangChain": [],
+ "OpenCV": [],
+ "spaCy": [],
+ "NLTK": [],
+ "Large Language Models": [
+  "LLM",
+  "LLMs"
+ ],
+ "Prompt Engineering": [],
+ "Computer Vision": [
+  "CV (computer vision)"
+ ],
+ "Generative AI": [
+  "GenAI",
+  "Gen AI"
+ ],
+ "MLOps": [],
+ "Statistics": [
+  "Statistical analysis"
+ ],
+ "A/B Testing": [
+  "AB testing",
+  "Split testing"
+ ],
+ "Data Analysis": [
+  "Data analytics"
+ ],
+ "Data Visualization": [
+  "Data visualisation",
+  "Dataviz"
+ ],
+ "Data Modeling": [
+  "Data modelling"
+ ],
+ "Data Warehousing": [
+  "Data warehouse",
+  "DWH"
+ ],
+ "ETL": [
+  "ELT",
+  "Extract Transform Load"
+ ],
+ "Data Engineering": [],
+ "Big Data": [],
+ "Hadoop": [
+  "Apache Hadoop",
+  "HDFS"
+ ],
+ "Hive": [
+  "Apache Hive"
+ ],
+ "Apache Airflow": [
+  "Airflow"
+ ],
+ "dbt": [
+  "data build tool"
+ ],
+ "Snowflake": [],
+ "Databricks": [],
+ "Amazon Redshift": [
+  "Redshift"
+ ],
+ "Google BigQuery": [
+  "BigQuery"
+ ],
+ "Azure Synapse": [
+  "Synapse Analytics"
+ ],
+ "Apache Flink": [
+  "Flink"
+ ],
+ "Apache NiFi": [
+  "NiFi"
+ ],
+ "Informatica": [],
+ "Talend": [],
+ "SSIS": [
+  "SQL Server Integration Services"
+ ],
+ "SSRS": [
+  "SQL Server Reporting Services"
+ ],
+ "SSAS": [],
+ "Looker": [],
+ "Qlik": [
+  "QlikView",
+  "Qlik Sense"
+ ],
+ "Google Analytics": [
+  "GA4"
+ ],
+ "Microsoft Power Automate": [
+  "Power Automate"
+ ],
+ "Power Apps": [
+  "PowerApps"
+ ],
+ "Alteryx": [],
+ "SAS": [],
+ "SPSS": [
+  "IBM SPSS"
+ ],
+ "Stata": [],
+ "Google Sheets": [],
+ "Pivot Tables": [
+  "Pivot tables",
+  "PivotTables"
+ ],
+ "VLOOKUP": [
+  "XLOOKUP"
+ ],
+ "DAX": [],
+ "Power Query": [],
+ "Data Cleaning": [
+  "Data cleansing",
+  "Data wrangling"
+ ],
+ "SQLite": [],
+ "MariaDB": [],
+ "Cassandra": [
+  "Apache Cassandra"
+ ],
+ "DynamoDB": [
+  "Amazon DynamoDB"
+ ],
+ "Couchbase": [],
+ "Neo4j": [],
+ "Firebase": [],
+ "Supabase": [],
+ "IBM Db2": [
+  "DB2"
+ ],
+ "Memcached": [],
+ "InfluxDB": [],
+ "ClickHouse": [],
+ "Cosmos DB": [
+  "Azure Cosmos DB"
+ ],
+ "NoSQL": [],
+ "Liquibase": [],
+ "Flyway": [],
+ "Amazon EC2": [
+  "EC2"
+ ],
+ "Amazon S3": [
+  "S3"
+ ],
+ "AWS Lambda": [
+  "Lambda"
+ ],
+ "AWS Glue": [
+  "Glue"
+ ],
+ "Amazon ECS": [
+  "ECS"
+ ],
+ "Amazon EKS": [
+  "EKS"
+ ],
+ "Amazon RDS": [
+  "RDS"
+ ],
+ "Amazon SQS": [
+  "SQS"
+ ],
+ "Amazon SNS": [
+  "SNS"
+ ],
+ "AWS CloudFormation": [
+  "CloudFormation"
+ ],
+ "Amazon CloudWatch": [
+  "CloudWatch"
+ ],
+ "AWS IAM": [
+  "IAM"
+ ],
+ "Azure DevOps": [
+  "VSTS"
+ ],
+ "Azure Functions": [],
+ "Azure Kubernetes Service": [
+  "AKS"
+ ],
+ "Google Kubernetes Engine": [
+  "GKE"
+ ],
+ "Google Cloud Functions": [],
+ "OpenShift": [
+  "Red Hat OpenShift"
+ ],
+ "Helm": [],
+ "Istio": [],
+ "ArgoCD": [
+  "Argo CD"
+ ],
+ "GitLab CI": [
+  "GitLab CI/CD"
+ ],
+ "CircleCI": [],
+ "Travis CI": [],
+ "Bamboo": [],
+ "TeamCity": [],
+ "Puppet": [],
+ "Chef": [],
+ "Vagrant": [],
+ "Packer": [],
+ "Prometheus": [],
+ "Grafana": [],
+ "ELK Stack": [
+  "ELK",
+  "Elastic Stack"
+ ],
+ "Logstash": [],
+ "Kibana": [],
+ "Splunk": [],
+ "Datadog": [],
+ "New Relic": [],
+ "Dynatrace": [],
+ "AppDynamics": [],
+ "Nagios": [],
+ "Zabbix": [],
+ "Nginx": [],
+ "Apache HTTP Server": [
+  "Apache httpd"
+ ],
+ "HAProxy": [],
+ "Serverless": [
+  "Serverless architecture"
+ ],
+ "Infrastructure as Code": [
+  "IaC"
+ ],
+ "DevOps": [],
+ "SRE": [
+  "Site Reliability Engineering"
+ ],
+ "Bitbucket": [],
+ "GitHub": [],
+ "GitLab": [],
+ "SVN": [
+  "Subversion"
+ ],
+ "SonarQube": [],
+ "Nexus": [
+  "Sonatype Nexus"
+ ],
+ "Artifactory": [
+  "JFrog Artifactory"
+ ],
+ "Unix": [],
+ "Windows Server": [],
+ "Networking": [
+  "Computer networking"
+ ],
+ "TCP/IP": [],
+ "DNS": [],
+ "Load Balancing": [],
+ "Cybersecurity": [
+  "Information security",
+  "InfoSec"
+ ],
+ "OWASP": [],
+ "Penetration Testing": [
+  "Pentesting"
+ ],
+ "Event-Driven Architecture": [
+  "EDA",
+  "Event driven architecture"
+ ],
+ "Domain-Driven Design": [
+  "DDD"
+ ],
+ "Design Patterns": [],
+ "System Design": [],
+ "Object-Oriented Programming": [
+  "OOP",
+  "OOPS"
+ ],
+ "Data Structures and Algorithms": [
+  "DSA",
+  "Data structures",
+  "Algorithms"
+ ],
+ "Multithreading": [
+  "Concurrency",
+  "Multi-threading"
+ ],
+ "Test-Driven Development": [
+  "TDD"
+ ],
+ "Unit Testing": [],
+ "Integration Testing": [],
+ "Performance Testing": [
+  "Load testing"
+ ],
+ "JMeter": [
+  "Apache JMeter"
+ ],
+ "Manual Testing": [],
+ "Automation Testing": [
+  "Test automation"
+ ],
+ "API Testing": [],
+ "Kanban": [],
+ "Waterfall": [],
+ "SAFe": [
+  "Scaled Agile Framework"
+ ],
+ "Confluence": [],
+ "Trello": [],
+ "Asana": [],
+ "Monday.com": [],
+ "Slack": [],
+ "Microsoft Teams": [
+  "MS Teams"
+ ],
+ "ActiveMQ": [
+  "Apache ActiveMQ"
+ ],
+ "Amazon Kinesis": [
+  "Kinesis"
+ ],
+ "Apache Pulsar": [
+  "Pulsar"
+ ],
+ "MQTT": [],
+ "IBM MQ": [
+  "WebSphere MQ"
+ ],
+ "Message Queues": [
+  "Messaging"
+ ],
+ "Caching": [],
+ "Linux Administration": [
+  "Linux admin"
+ ],
+ "Shell Scripting": [],
+ "Recruitment": [
+  "Recruiting",
+  "Talent acquisition",
+  "Hiring"
+ ],
+ "Onboarding": [
+  "Employee onboarding"
+ ],
+ "Payroll": [
+  "Payroll processing",
+  "Payroll management"
+ ],
+ "HRIS": [
+  "HR information systems",
+  "HRMS"
+ ],
+ "Workday": [],
+ "SAP SuccessFactors": [
+  "SuccessFactors"
+ ],
+ "Zoho People": [],
+ "BambooHR": [],
+ "Greenhouse": [],
+ "Lever": [],
+ "Employee Relations": [],
+ "Performance Management": [
+  "Performance appraisal",
+  "Appraisals"
+ ],
+ "Compensation and Benefits": [
+  "C&B",
+  "Comp and Ben"
+ ],
+ "Labour Law": [
+  "Labor law",
+  "Employment law"
+ ],
+ "Statutory Compliance": [
+  "PF and ESI compliance",
+  "Statutory compliances"
+ ],
+ "Employee Engagement": [],
+ "Training and Development": [
+  "L&D",
+  "Learning and Development"
+ ],
+ "Exit Interviews": [
+  "Exit management",
+  "Offboarding"
+ ],
+ "Sourcing": [
+  "Candidate sourcing"
+ ],
+ "Screening": [
+  "Resume screening",
+  "CV screening"
+ ],
+ "Interviewing": [
+  "Interview coordination"
+ ],
+ "LinkedIn Recruiter": [],
+ "Naukri": [
+  "Naukri RMS"
+ ],
+ "Applicant Tracking Systems": [
+  "ATS"
+ ],
+ "HR Policies": [
+  "Policy drafting"
+ ],
+ "Grievance Handling": [],
+ "Attendance Management": [
+  "Time and attendance"
+ ],
+ "HR Analytics": [
+  "People analytics"
+ ],
+ "Employer Branding": [],
+ "Background Verification": [
+  "BGV"
+ ],
+ "Workforce Planning": [],
+ "Succession Planning": [],
+ "Diversity and Inclusion": [
+  "D&I",
+  "DEI"
+ ],
+ "Customer Service": [
+  "Customer support",
+  "Client service"
+ ],
+ "Zendesk": [],
+ "Freshdesk": [],
+ "Salesforce": [
+  "SFDC"
+ ],
+ "Salesforce Service Cloud": [
+  "Service Cloud"
+ ],
+ "ServiceNow": [],
+ "HubSpot": [],
+ "Intercom": [],
+ "Zoho Desk": [],
+ "Jira Service Management": [
+  "JSM",
+  "Jira Service Desk"
+ ],
+ "CRM": [
+  "Customer relationship management"
+ ],
+ "Ticketing Systems": [
+  "Ticketing"
+ ],
+ "SLA Management": [
+  "SLA"
+ ],
+ "Escalation Management": [
+  "Escalation handling"
+ ],
+ "Live Chat Support": [
+  "Chat support"
+ ],
+ "Email Support": [],
+ "Voice Support": [
+  "Phone support",
+  "Inbound calls"
+ ],
+ "Team Leadership": [
+  "Team management",
+  "People management"
+ ],
+ "Quality Assurance (Support)": [
+  "Call quality monitoring",
+  "QA audits"
+ ],
+ "CSAT": [
+  "Customer satisfaction"
+ ],
+ "NPS": [
+  "Net Promoter Score"
+ ],
+ "First Call Resolution": [
+  "FCR"
+ ],
+ "Average Handle Time": [
+  "AHT"
+ ],
+ "Workforce Management": [
+  "WFM"
+ ],
+ "Root Cause Analysis": [
+  "RCA"
+ ],
+ "Knowledge Base Management": [
+  "Knowledge base"
+ ],
+ "ITIL": [],
+ "Conflict Resolution": [],
+ "Coaching": [
+  "Agent coaching"
+ ],
+ "Process Improvement": [
+  "Continuous improvement"
+ ],
+ "Six Sigma": [
+  "Lean Six Sigma"
+ ],
+ "Communication": [
+  "Communication skills"
+ ],
+ "Stakeholder Management": [],
+ "Project Management": [],
+ "PMP": [],
+ "PRINCE2": [],
+ "Microsoft Office": [
+  "MS Office"
+ ],
+ "Microsoft Word": [
+  "MS Word"
+ ],
+ "Microsoft PowerPoint": [
+  "PowerPoint",
+  "MS PowerPoint"
+ ],
+ "SAP": [
+  "SAP ERP"
+ ],
+ "Tally": [
+  "Tally ERP"
+ ],
+ "Figma": [],
+ "Adobe Photoshop": [
+  "Photoshop"
+ ]
 }

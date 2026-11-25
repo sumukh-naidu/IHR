@@ -1,0 +1,25 @@
+# Question and language policy lexicon (AI Specification v1.1 §9, A-21, A-22).
+# Maintained by the AI team via pull request; core repeats the cheap checks with this same file.
+version: 1.0.0
+categories:
+  age: [age, how old, born, birth year, retire]
+  family: [married, marriage, spouse, husband, wife, children, kids, pregnant, pregnancy, family planning,
+           maternity, paternity]
+  religion: [religion, religious, church, temple, mosque, faith, festival you celebrate]
+  caste_ethnicity: [caste, community, ethnicity, race, tribe, surname origin]
+  nationality: [nationality, citizenship, native place, where are you from, mother tongue]
+  politics: [political, party, vote, election, union membership]
+  health: [health condition, illness, disease, medical, medication, disability, disabled, mental health]
+  sexuality_gender: [sexual orientation, gay, lesbian, transgender, gender identity]
+  money_history: [current salary, salary history, previous salary, CTC history]
+  home: [home address, where do you live, own a house]
+  appearance: [appearance, weight, height, look like]
+# Technical phrases that contain lexicon words (§9.1).
+whitelist: [health check, health endpoint, health probe, age of the data, cache age, max-age, child process,
+            child node, child element, parent-child, race condition, union type, SQL union, union all, born-digital,
+            # Added (ASSUMPTIONS #23): common CV/job vocabulary that would otherwise trip the lexicon.
+            third-party, third party, open-source community, developer community, community edition,
+            medical device, medical devices, medical billing, medical coding, model weights, weight decay,
+            tree height, page weight, voting algorithm, leader election]
+# Extra terms for the language policy only (§9.2).
+language_extra: [accent, tone of voice, confident-sounding, nervous, "emotion\\w*", facial]

@@ -1,0 +1,35 @@
+# ihr-speech-stt GPU image (AI Specification v1.1 §3.4, S-14, A-26).
+# CUDA 12 + cuDNN runtime, Python 3.12, CTranslate2 matching faster-whisper; model baked in.
+# The model directory comes from the company artefact store (checksummed) and is placed at
+# build-context path models/whisper/large-v3-turbo before building:
+#   docker build -f services/ihr-speech-service/Dockerfile.stt -t ihr-speech-stt .
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends software-properties-common ca-certificates \
+ && add-apt-repository -y ppa:deadsnakes/ppa \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends python3.12 python3.12-venv \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3.12 -m ensurepip && python3.12 -m pip install --no-cache-dir uv
+
+WORKDIR /app
+COPY libs/py-worker-common /app/libs/py-worker-common
+COPY services/ihr-speech-service /app/services/ihr-speech-service
+COPY contracts /app/contracts
+RUN uv pip install --system --python python3.12 /app/libs/py-worker-common "/app/services/ihr-speech-service[stt]"
+
+# Baked model (never downloaded at runtime); checksum file shipped alongside by the artefact store.
+COPY models/whisper /models/whisper
+RUN cd /models/whisper && if [ -f SHA256SUMS ]; then sha256sum -c SHA256SUMS; fi
+
+ENV IHR_CONTRACTS_DIR=/app/contracts \
+    WORKER_ROLE=stt STT_PROVIDER=faster-whisper \
+    WHISPER_MODEL=large-v3-turbo WHISPER_MODEL_DIR=/models/whisper \
+    WHISPER_DEVICE=cuda WHISPER_COMPUTE_TYPE=float16 WHISPER_NUM_WORKERS=2 \
+    STT_MAX_AUDIO_SECONDS=400 HF_HUB_OFFLINE=1
+RUN useradd --uid 10001 --no-create-home ihr
+USER 10001
+EXPOSE 8080
+ENTRYPOINT ["python3.12", "-m", "speech.main"]

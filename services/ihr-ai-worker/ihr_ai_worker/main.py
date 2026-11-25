@@ -16,6 +16,7 @@ from .config import AiWorkerConfig
 from .extraction.clamav import ClamAvScanner
 from .llm.kimi import build_llm_client
 from .mock_handlers import MockTaskHandler
+from .pipelines.cv_match import CvMatchHandler
 from .pipelines.cv_parse import CvParseHandler
 from .prompts import load_registry
 from .tasks import tasks_for_role
@@ -30,6 +31,8 @@ def real_handler(spec, cfg: AiWorkerConfig, llm, prompts):
         return CvParseHandler(llm, prompts, scanner=ClamAvScanner(cfg.clamav_host, cfg.clamav_port),
                               ocr_max_pages=cfg.ocr_max_pages, soffice=cfg.libreoffice_bin,
                               debug_capture_enabled=cfg.ai_debug_capture)
+    if spec.task == "CV_MATCH":
+        return CvMatchHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
     return None
 
 

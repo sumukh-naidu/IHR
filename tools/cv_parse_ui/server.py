@@ -1,7 +1,7 @@
-"""Manual test UI for CV_PARSE (dev only; not part of the worker image).
+"""Manual test UI for CV_PARSE, CV_MATCH and STT (dev only; not part of any image).
 
-Runs the real CV_PARSE pipeline (extraction -> redaction -> model -> validation -> enrichment)
-against a local OpenAI-compatible server (llama-server) or the mock LLM.
+Runs the real pipelines against a local OpenAI-compatible server (llama-server) or the mock LLM,
+and real faster-whisper (small.en, CPU int8 = the spec's LOCAL/DEV setting) for speech-to-text.
 ClamAV is skipped (no scanner on a dev Mac); OCR needs Tesseract installed.
 
     .venv/bin/python tools/cv_parse_ui/server.py     ->  http://127.0.0.1:8765
@@ -14,10 +14,13 @@ import json
 import os
 import sys
 import time
+import uuid
+from collections import OrderedDict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "libs/py-worker-common/src"), str(ROOT / "services/ihr-ai-worker")]
+sys.path[:0] = [str(ROOT / "libs/py-worker-common/src"), str(ROOT / "services/ihr-ai-worker"),
+                str(ROOT / "services/ihr-speech-service")]
 os.environ.setdefault("IHR_CONTRACTS_DIR", str(ROOT / "contracts"))
 
 import uvicorn  # noqa: E402
@@ -29,16 +32,27 @@ from ihr_worker_common.storage import InMemoryStorage  # noqa: E402
 from ihr_ai_worker.llm import base  # noqa: E402
 from ihr_ai_worker.llm.kimi import KimiClient  # noqa: E402
 from ihr_ai_worker.llm.mock import MockLlmClient  # noqa: E402
+from ihr_ai_worker.pipelines.cv_match import CvMatchHandler  # noqa: E402
 from ihr_ai_worker.pipelines.cv_parse import CvParseHandler  # noqa: E402
+from speech.stt import TranscriptionHandler, WhisperConfig, WhisperEngine  # noqa: E402
+from speech.stt_mock import MockTranscriptionHandler  # noqa: E402
 from ihr_ai_worker.prompts import load_registry  # noqa: E402
 
 LOCAL_URL = os.environ.get("LOCAL_LLM_BASE_URL", "http://127.0.0.1:8081/v1")
 LOCAL_MODEL = os.environ.get("LOCAL_LLM_MODEL", "qwen3.6-35b-a3b")
 # local inference is slower than Kimi; widen only the per-call timeout for this tool
-base.TASK_PARAMS["CV_PARSE"] = dataclasses.replace(base.TASK_PARAMS["CV_PARSE"], timeout_s=600)
+for _t in ("CV_PARSE", "CV_MATCH"):
+    base.TASK_PARAMS[_t] = dataclasses.replace(base.TASK_PARAMS[_t], timeout_s=600)
 
 REGISTRY = load_registry(ROOT / "docs/prompts/active.yaml")
 REQUEST = json.loads((ROOT / "contracts/fixtures/ai/cv_parse/request.json").read_text())
+MATCH_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/cv_match/request.json").read_text())
+STT_REQUEST = json.loads((ROOT / "contracts/fixtures/speech/transcription/request.json").read_text())
+WHISPER_MODEL = os.environ.get("UI_WHISPER_MODEL", "small.en")
+SOFFICE = os.environ.get("LIBREOFFICE_BIN", "/Applications/LibreOffice.app/Contents/MacOS/soffice")
+PARSES: "OrderedDict[str, dict]" = OrderedDict()   # parseId -> storage + output refs (per browser tab)
+MAX_PARSES = 20
+_ENGINE: WhisperEngine | None = None
 LOCAL = KimiClient(base_url=LOCAL_URL, api_key="local", model_standard=LOCAL_MODEL, model_realtime=LOCAL_MODEL,
                    max_concurrency=1, rpm_limit=60, provider_name="local")
 
@@ -71,7 +85,7 @@ async def parse(request: Request, ext: str = "pdf", name: str = "", provider: st
     p["redactionHints"] = {"fullName": name.strip() or None, "email": None, "phone": None}
 
     llm = MockLlmClient() if provider == "mock" else LOCAL
-    handler = CvParseHandler(llm, REGISTRY, scanner=SkipScan(), debug_capture_enabled=True)
+    handler = CvParseHandler(llm, REGISTRY, scanner=SkipScan(), soffice=SOFFICE, debug_capture_enabled=True)
     proc = Processor(handler, storage, "ihr-ai-worker", "ui")
     t0 = time.monotonic()
     try:
@@ -83,12 +97,91 @@ async def parse(request: Request, ext: str = "pdf", name: str = "", provider: st
     payload = json.loads(out.value)["payload"]
     result = {"topic": out.topic, "seconds": elapsed, "payload": payload}
     if out.topic.endswith(".completed"):
+        parse_id = uuid.uuid4().hex
+        PARSES[parse_id] = {"storage": storage, "output": payload["output"], "file": request.query_params.get("fname", "")}
+        while len(PARSES) > MAX_PARSES:
+            PARSES.popitem(last=False)
+        result["parseId"] = parse_id
         def get(ref):
             return storage.get_bytes(ref["bucket"], ref["key"])
         result["profile"] = json.loads(get(payload["output"]["cvProfile"]))
         result["redactedText"] = get(payload["output"]["cvText"]).decode("utf-8")
     captured = {k: json.loads(v) for (_, k), (v, _) in storage.objects.items() if k.startswith("ai-runs/")}
     result["modelCalls"] = captured
+    return JSONResponse(result)
+
+
+def _event(proc, env):
+    try:
+        [out] = proc.process(json.dumps(env).encode(), env["entityId"], {})
+    finally:
+        proc.shutdown()
+    return out, json.loads(out.value)["payload"]
+
+
+@app.post("/api/match")
+async def match(request: Request) -> JSONResponse:
+    import anyio
+    body = await request.json()
+    parsed = PARSES.get(body.get("parseId") or "")
+    if not parsed:
+        return JSONResponse({"error": "Parse a CV in step 1 first (or parse it again: the server was restarted)."}, 400)
+    env = json.loads(json.dumps(MATCH_REQUEST))
+    p = env["payload"]
+    p["cvProfile"], p["cvText"] = parsed["output"]["cvProfile"], parsed["output"]["cvText"]
+    p["job"], p["requirements"] = body["job"], body["requirements"]
+    try:
+        from ihr_worker_common import contracts
+        contracts.validate_payload("ihr.cv.match.requested", p)
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"error": f"Request is not valid: {e}"}, 400)
+    storage = parsed["storage"]
+    llm = MockLlmClient() if body.get("provider") == "mock" else LOCAL
+    proc = Processor(CvMatchHandler(llm, REGISTRY), storage, "ihr-ai-worker", "ui")
+    t0 = time.monotonic()
+    out, payload = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+    result = {"topic": out.topic, "seconds": round(time.monotonic() - t0, 1), "payload": payload,
+              "cvFile": parsed.get("file", "")}
+    if out.topic.endswith(".completed"):
+        result["fit"] = json.loads(storage.get_bytes(payload["output"]["bucket"], payload["output"]["key"]))
+    result["modelCalls"] = {k: json.loads(v) for (_, k), (v, _) in storage.objects.items()
+                            if k.startswith("ai-runs/") and env["payload"]["jobId"] in k}
+    return JSONResponse(result)
+
+
+def _engine() -> WhisperEngine:
+    global _ENGINE
+    if _ENGINE is None:
+        eng = WhisperEngine(WhisperConfig(model=WHISPER_MODEL, model_dir="/nonexistent", device="cpu",
+                                          compute_type="int8", num_workers=2))
+        eng.start()
+        _ENGINE = eng
+    return _ENGINE
+
+
+@app.post("/api/transcribe")
+async def transcribe(request: Request, hints: str = "", provider: str = "whisper", maxSeconds: int = 400,
+                     mime: str = "audio/webm") -> JSONResponse:
+    import anyio
+    data = await request.body()
+    storage = InMemoryStorage()
+    env = json.loads(json.dumps(STT_REQUEST))
+    p = env["payload"]
+    p["audio"] = storage.put_bytes(p["audio"]["bucket"], p["audio"]["key"], data, mime or "application/octet-stream")
+    p["vocabularyHints"] = [h.strip() for h in hints.split(",") if h.strip()][:40]
+    p["maxDurationSeconds"] = max(1, maxSeconds)
+    t0 = time.monotonic()
+    if provider == "mock":
+        handler = MockTranscriptionHandler()
+    else:
+        handler = TranscriptionHandler(await anyio.to_thread.run_sync(_engine))
+    load_s = round(time.monotonic() - t0, 1)
+    proc = Processor(handler, storage, "ihr-speech-service", "ui")
+    out, payload = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+    result = {"topic": out.topic, "seconds": round(time.monotonic() - t0, 1), "modelLoadSeconds": load_s,
+              "payload": payload}
+    if out.topic.endswith(".completed"):
+        result["transcript"] = json.loads(storage.get_bytes(payload["output"]["bucket"], payload["output"]["key"]))
     return JSONResponse(result)
 
 
@@ -104,7 +197,8 @@ def health() -> dict:
         ok = httpx.get(LOCAL_URL.removesuffix("/v1") + "/health", timeout=2).json().get("status") == "ok"
     except Exception:
         ok = False
-    return {"localModel": ok, "localUrl": LOCAL_URL, "model": LOCAL_MODEL}
+    return {"localModel": ok, "localUrl": LOCAL_URL, "model": LOCAL_MODEL, "whisper": WHISPER_MODEL,
+            "whisperLoaded": _ENGINE is not None}
 
 
 if __name__ == "__main__":

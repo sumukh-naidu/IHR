@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CV Parse Tester</title>
+<title>IHR AI Tester</title>
 <style>
 :root{
   --bg:#f6f7f9; --panel:#fff; --ink:#1b1f24; --muted:#5f6b7a; --line:#e3e6eb;
@@ -56,18 +56,37 @@ th{color:var(--muted);font-weight:500}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-2px}
 @keyframes s{to{transform:rotate(360deg)}}
 .hidden{display:none}
+.steps{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.step{background:var(--panel);color:var(--muted);border:1px solid var(--line);font-weight:600}
+.step.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);font-weight:500}
+textarea,input[type=number],td input,td select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%}
+input[type=number]{min-width:90px}
+td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
+.st{font-weight:700;font-size:12.5px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.st.MATCHED{background:var(--ok-bg);color:var(--ok)} .st.PARTIAL{background:var(--warn-bg);color:var(--warn)}
+.st.MISSING{background:var(--bad-bg);color:var(--bad)} .st.UNKNOWN{background:var(--chip);color:var(--muted)}
+.quote{color:var(--muted);font-size:13px;margin-top:4px}
+.seg{display:grid;grid-template-columns:110px 1fr 60px;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
 </style>
 </head>
 <body>
 <main>
   <header>
     <div>
-      <h1>CV Parse Tester</h1>
-      <div class="muted small">Runs the real CV_PARSE pipeline locally. ClamAV is skipped; OCR needs Tesseract.</div>
+      <h1>IHR AI Tester</h1>
+      <div class="muted small">Runs the real pipelines locally. ClamAV is skipped; OCR needs Tesseract.</div>
     </div>
     <span class="status" id="health"><span class="dot"></span><span>checking model…</span></span>
   </header>
 
+  <nav class="steps" id="steps">
+    <button class="step on" data-p="parse">1 · CV Parse</button>
+    <button class="step" data-p="match">2 · CV Match</button>
+    <button class="step" data-p="stt">3 · Speech to text</button>
+  </nav>
+
+  <div id="page-parse">
   <section class="panel">
     <div class="drop" id="drop">
       <input type="file" id="file" accept=".pdf,.docx,.doc" hidden>
@@ -105,11 +124,81 @@ th{color:var(--muted);font-weight:500}
       <div id="t-raw" class="hidden"><pre id="raw"></pre></div>
     </div>
   </section>
+  </div>
+
+  <div id="page-match" class="hidden">
+    <section class="panel">
+      <div id="matchCv" class="small muted" style="margin-bottom:12px"></div>
+      <div class="row" style="margin-top:0">
+        <label style="flex:1">Job title <input type="text" id="jobTitle"></label>
+        <label>Min years <input type="number" id="minY" min="0" step="0.5"></label>
+        <label>Max years <input type="number" id="maxY" min="0" step="0.5"></label>
+      </div>
+      <label style="margin-top:12px">Job summary <textarea id="jobSummary" rows="2"></textarea></label>
+      <h2 style="margin-top:16px">Requirements</h2>
+      <div class="tablewrap"><table id="reqTable">
+        <thead><tr><th>Code</th><th>Category</th><th>Type</th><th>Requirement text</th><th>Skill name</th><th>Min months</th><th>Weight</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="row">
+        <button class="ghost" id="addReq">+ Add requirement</button>
+        <button class="ghost" id="sampleJob">Load sample job</button>
+        <label>Model
+          <select id="matchProvider">
+            <option value="local">Local Qwen (llama-server)</option>
+            <option value="mock">Mock (fixture response)</option>
+          </select>
+        </label>
+        <button id="runMatch">Run CV_MATCH</button>
+        <span id="matchBusy" class="muted small hidden"><span class="spinner"></span> Matching… ~30–60 s</span>
+      </div>
+    </section>
+    <section id="matchResults" class="hidden">
+      <div id="matchBanner" class="banner"></div>
+      <div class="panel" id="matchBody"></div>
+    </section>
+  </div>
+
+  <div id="page-stt" class="hidden">
+    <section class="panel">
+      <div class="grid">
+        <div>
+          <h2>Record an answer</h2>
+          <button id="recBtn">● Start recording</button>
+          <span id="recTime" class="muted small"></span>
+          <div class="muted small" style="margin-top:6px">Uses your microphone; recorded as WebM/Opus like the interview page.</div>
+        </div>
+        <div>
+          <h2>…or upload audio</h2>
+          <input type="file" id="audioFile" accept="audio/*,.webm,.ogg,.wav,.mp3,.m4a,.aiff">
+        </div>
+      </div>
+      <audio id="player" controls class="hidden" style="width:100%;margin-top:14px"></audio>
+      <div class="row">
+        <label style="flex:1">Vocabulary hints (comma separated)
+          <input type="text" id="hints" placeholder="Kafka, Spring Boot, PostgreSQL">
+        </label>
+        <label>Max seconds <input type="number" id="maxSec" value="400" min="1"></label>
+        <label>Engine
+          <select id="sttProvider">
+            <option value="whisper">faster-whisper small.en (CPU)</option>
+            <option value="mock">Mock</option>
+          </select>
+        </label>
+        <button id="runStt" disabled>Transcribe</button>
+        <span id="sttBusy" class="muted small hidden"><span class="spinner"></span> Transcribing… first run loads the model (~25 s)</span>
+      </div>
+    </section>
+    <section id="sttResults" class="hidden">
+      <div id="sttBanner" class="banner"></div>
+      <div class="panel" id="sttBody"></div>
+    </section>
+  </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "—").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let file = null;
+let parsed = null;   // {id, file} of the CV parsed in THIS tab; CV Match uses it
 
 async function health(){
   try{
@@ -141,10 +230,11 @@ $("run").onclick = async () => {
   const ext = file.name.split(".").pop();
   $("run").disabled = true; $("busy").classList.remove("hidden");
   try{
-    const q = new URLSearchParams({ext, name: $("name").value, provider: $("provider").value});
+    const q = new URLSearchParams({ext, name: $("name").value, provider: $("provider").value, fname: file.name});
     const r = await fetch("/api/parse?" + q, {method:"POST", body: await file.arrayBuffer()});
     const d = await r.json();
     if(!r.ok) throw new Error(d.error || r.statusText);
+    if(d.parseId) parsed = {id: d.parseId, file: file.name};
     render(d);
   }catch(e){
     $("results").classList.remove("hidden");
@@ -202,6 +292,167 @@ function render(d){
     <h2 style="margin-top:18px">Canonical skills (code)</h2><div class="tablewrap"><table><tr><th>Canonical</th><th>As written</th></tr>${canon}</table></div>
     <h2 style="margin-top:18px">Education</h2><div class="tablewrap"><table><tr><th>Qualification</th><th>Field</th><th>Institution</th><th>Years</th></tr>${edu}</table></div>
     <h2 style="margin-top:18px">Certifications / projects</h2>${chips(pr.certifications.map(c => c.name).concat(pr.projects.map(x => x.name)))}`;
+}
+
+// ---------- step navigation ----------
+document.querySelectorAll(".step").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".step").forEach(x => x.classList.toggle("on", x === b));
+  ["parse","match","stt"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
+  if(b.dataset.p === "match") refreshMatchCv();
+});
+
+// ---------- CV_MATCH ----------
+const CATS = ["SKILL","EXPERIENCE","EDUCATION","CERTIFICATION","DOMAIN","OTHER"];
+function reqRow(r = {}){
+  const tr = document.createElement("tr");
+  const sel = (opts, v) => `<select>${opts.map(o => `<option${o===v?" selected":""}>${o}</option>`).join("")}</select>`;
+  tr.innerHTML = `<td><input value="${esc(r.code ?? "R" + ($("reqTable").tBodies[0].rows.length + 1)).replace("—","")}"></td>
+    <td>${sel(CATS, r.category || "SKILL")}</td><td>${sel(["MUST_HAVE","PREFERRED"], r.type || "MUST_HAVE")}</td>
+    <td><input value="${r.text ? esc(r.text) : ""}" style="min-width:220px"></td>
+    <td><input value="${r.skillName ? esc(r.skillName) : ""}"></td>
+    <td><input type="number" min="0" value="${r.minMonths ?? ""}"></td>
+    <td><input type="number" min="1" max="5" value="${r.weight ?? 2}"></td>
+    <td><button class="ghost" title="Remove">✕</button></td>`;
+  tr.querySelector("button").onclick = () => tr.remove();
+  $("reqTable").tBodies[0].appendChild(tr);
+}
+function loadSample(){
+  $("jobTitle").value = "Python Backend Engineer";
+  $("jobSummary").value = "Build Python APIs and LLM-backed document services.";
+  $("minY").value = 2; $("maxY").value = 6;
+  $("reqTable").tBodies[0].innerHTML = "";
+  [{code:"R1",category:"SKILL",type:"MUST_HAVE",text:"Python backend development with FastAPI or Flask",skillName:"Python",weight:3},
+   {code:"R2",category:"SKILL",type:"MUST_HAVE",text:"Relational databases such as PostgreSQL",skillName:"PostgreSQL",weight:2},
+   {code:"R3",category:"EXPERIENCE",type:"MUST_HAVE",text:"At least 3 years of professional software experience",minMonths:36,weight:3},
+   {code:"R4",category:"SKILL",type:"PREFERRED",text:"Kubernetes in production",skillName:"Kubernetes",weight:1},
+   {code:"R5",category:"SKILL",type:"PREFERRED",text:"Integrating LLMs into applications",skillName:"Large Language Models",weight:2},
+   {code:"R6",category:"SKILL",type:"PREFERRED",text:"Experience with AWS cloud services",skillName:"AWS",weight:1}].forEach(reqRow);
+}
+$("addReq").onclick = () => reqRow();
+$("sampleJob").onclick = loadSample;
+loadSample();
+
+function refreshMatchCv(){
+  $("matchCv").innerHTML = parsed
+    ? `Matching against the CV you parsed in step 1: <b>${esc(parsed.file)}</b>`
+    : `<span style="color:var(--bad)">Parse a CV in step 1 first — CV Match uses its profile and redacted text.</span>`;
+}
+
+function readReqs(){
+  return [...$("reqTable").tBodies[0].rows].map(tr => {
+    const [code, cat, type, text, skill, minM, w] = [...tr.querySelectorAll("input,select")].map(x => x.value.trim());
+    const r = {code, category: cat, text, type, weight: parseInt(w || "1", 10)};
+    if(skill) r.skillName = skill;
+    if(minM !== "") r.minMonths = parseInt(minM, 10);
+    return r;
+  });
+}
+const yrs = v => v === "" ? null : Math.round(parseFloat(v) * 12);
+
+$("runMatch").onclick = async () => {
+  $("runMatch").disabled = true; $("matchBusy").classList.remove("hidden");
+  try{
+    if(!parsed) throw new Error("Parse a CV in step 1 first.");
+    const body = {parseId: parsed.id, provider: $("matchProvider").value, requirements: readReqs(),
+      job: {title: $("jobTitle").value.trim(), summary: $("jobSummary").value.trim(),
+            experienceMinMonths: yrs($("minY").value), experienceMaxMonths: yrs($("maxY").value)}};
+    const r = await fetch("/api/match", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderMatch(d);
+  }catch(e){
+    $("matchResults").classList.remove("hidden");
+    $("matchBanner").className = "banner bad"; $("matchBanner").textContent = "Error: " + e.message; $("matchBody").innerHTML = "";
+  }finally{ $("runMatch").disabled = false; $("matchBusy").classList.add("hidden"); }
+};
+
+function renderMatch(d){
+  $("matchResults").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed");
+  $("matchBanner").className = "banner " + (ok ? "ok" : "bad");
+  $("matchBanner").textContent = (d.cvFile ? d.cvFile + " · " : "") + (ok
+    ? `Completed in ${d.seconds}s — ${p.run.validationStatus}${p.run.repairAttempted ? " (after one repair)" : ""} · prompt v${p.run.promptVersion}`
+    : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`);
+  const calls = Object.entries(d.modelCalls || {}).map(([k,v]) => `<details><summary>${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
+  if(!ok){ $("matchBody").innerHTML = calls || ""; return; }
+  const f = d.fit, req = Object.fromEntries(readReqs().map(r => [r.code, r]));
+  const rows = f.criteria.map(c => `<tr>
+      <td><b>${esc(c.requirementCode)}</b><div class="muted small">${esc(req[c.requirementCode]?.type)}</div></td>
+      <td>${esc(req[c.requirementCode]?.text)}</td>
+      <td><span class="st ${c.status}">${c.status}</span><div class="muted small">${esc(c.confidence)}${c.statusSource === "DETERMINISTIC_EXPERIENCE" ? " · computed by code" : ""}</div></td>
+      <td>${esc(c.rationale)}${c.evidence.map(e => `<div class="quote">“${esc(e.quote)}”</div>`).join("")}</td></tr>`).join("");
+  const li = a => a.length ? `<ul>${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<span class="muted">none</span>`;
+  $("matchBody").innerHTML = `
+    <h2>Requirements</h2>
+    <div class="tablewrap"><table><tr><th>Code</th><th>Requirement</th><th>Status</th><th>Rationale and evidence</th></tr>${rows}</table></div>
+    <h2 style="margin-top:18px">Summary</h2><p>${esc(f.summary)}</p>
+    <div class="grid"><div><h2>Strengths</h2>${li(f.strengths)}</div><div><h2>Gaps</h2>${li(f.gaps)}</div>
+      <div><h2>Clarification questions</h2>${li(f.clarificationQuestions)}</div><div><h2>Warnings</h2>${chips(f.warnings, "warn")}</div></div>
+    <h2 style="margin-top:18px">Model run</h2>${kv({model:p.run.model, latency:`${(p.run.latencyMs/1000).toFixed(1)} s`, "tokens in/out":`${p.run.inputTokens ?? "—"} / ${p.run.outputTokens ?? "—"}`})}
+    <h2 style="margin-top:18px">Model calls</h2>${calls || '<span class="muted">none</span>'}
+    <h2 style="margin-top:18px">Raw JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(d, null, 2))}</pre></details>`;
+}
+
+// ---------- STT ----------
+let audioBlob = null, audioName = "", rec = null, recTimer = null;
+function setAudio(blob, name){
+  audioBlob = blob; audioName = name;
+  $("player").src = URL.createObjectURL(blob); $("player").classList.remove("hidden");
+  $("runStt").disabled = false;
+}
+$("audioFile").onchange = e => { const f = e.target.files[0]; if(f) setAudio(f, f.name); };
+$("recBtn").onclick = async () => {
+  if(rec && rec.state === "recording"){ rec.stop(); return; }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const type = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+    rec = new MediaRecorder(stream, type ? {mimeType: type} : {});
+    const chunks = [];
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop()); clearInterval(recTimer);
+      $("recBtn").textContent = "● Start recording";
+      setAudio(new Blob(chunks, {type: rec.mimeType || "audio/webm"}), "recording.webm");
+    };
+    rec.start(); const t0 = Date.now();
+    $("recBtn").textContent = "■ Stop recording";
+    recTimer = setInterval(() => $("recTime").textContent = ((Date.now() - t0) / 1000).toFixed(0) + " s", 250);
+  }catch(e){ alert("Microphone not available: " + e.message); }
+};
+$("runStt").onclick = async () => {
+  if(!audioBlob) return;
+  $("runStt").disabled = true; $("sttBusy").classList.remove("hidden");
+  try{
+    const q = new URLSearchParams({hints: $("hints").value, provider: $("sttProvider").value,
+                                   maxSeconds: $("maxSec").value || 400, mime: audioBlob.type || "application/octet-stream"});
+    const r = await fetch("/api/transcribe?" + q, {method:"POST", body: await audioBlob.arrayBuffer()});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderStt(d);
+  }catch(e){
+    $("sttResults").classList.remove("hidden");
+    $("sttBanner").className = "banner bad"; $("sttBanner").textContent = "Error: " + e.message; $("sttBody").innerHTML = "";
+  }finally{ $("runStt").disabled = false; $("sttBusy").classList.add("hidden"); }
+};
+const sec = ms => (ms / 1000).toFixed(2);
+function renderStt(d){
+  $("sttResults").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed");
+  $("sttBanner").className = "banner " + (ok ? "ok" : "bad");
+  if(!ok){ $("sttBanner").textContent = `${audioName} · Failed: ${p.errorCode} — ${p.message}`; $("sttBody").innerHTML = ""; return; }
+  const t = d.transcript, procS = p.run.latencyMs / 1000;
+  $("sttBanner").textContent = `${audioName} · Transcribed ${sec(t.durationMs)} s of audio in ${procS.toFixed(1)} s` +
+    (d.modelLoadSeconds > 1 ? ` (+${d.modelLoadSeconds} s model load)` : "");
+  const segs = t.segments.map(s => `<div class="seg"><span class="muted small">${sec(s.startMs)}–${sec(s.endMs)} s</span><span>${esc(s.text)}</span><span class="muted small">${s.confidence.toFixed(2)}</span></div>`).join("");
+  $("sttBody").innerHTML = `
+    <div class="grid">
+      <div><h2>Quality</h2>${kv({"speech detected": t.speechDetected, "avg confidence": t.avgConfidence, segments: t.segments.length})}</div>
+      <div><h2>Quality flags</h2>${chips(t.qualityFlags, "warn")}</div>
+      <div><h2>Engine</h2>${kv({provider: p.run.provider, model: t.model, "real-time factor": (procS / Math.max(t.durationMs/1000, 0.1)).toFixed(3)})}</div>
+    </div>
+    <h2 style="margin-top:18px">Full text</h2><p>${esc(t.segments.map(s => s.text).join(" ")) || '<span class="muted">(no speech)</span>'}</p>
+    <h2>Segments</h2>${segs || '<span class="muted">none</span>'}
+    <h2 style="margin-top:18px">Raw transcript JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(t, null, 2))}</pre></details>`;
 }
 </script>
 </body>

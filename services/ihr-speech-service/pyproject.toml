@@ -10,6 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+stt = ["faster-whisper>=1.1", "numpy>=1.26"]
 test = ["pytest>=8", "numpy>=1.26"]
 
 [tool.uv.sources]
