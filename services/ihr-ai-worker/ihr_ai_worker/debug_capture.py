@@ -21,7 +21,8 @@ def capture_keys(job_id: str, when: datetime | None = None) -> tuple[str, str]:
 
 
 def capture(storage: Storage, *, enabled: bool, job_id: str, task: str, prompt_id: str, prompt_version: str,
-            calls: list[dict], when: datetime | None = None) -> None:
+            calls: list[dict], when: datetime | None = None, outcome: str = "VALID",
+            validation_errors: list[str] | None = None) -> None:
     """calls: one entry per provider call, {"messages": [...], "response": str, "finishReason": str}.
 
     Best effort: a capture failure must never fail the job.
@@ -34,7 +35,7 @@ def capture(storage: Storage, *, enabled: bool, job_id: str, task: str, prompt_i
         put_json(storage, generated_bucket(), req_key,
                  {**header, "calls": [{"messages": c["messages"]} for c in calls]})
         put_json(storage, generated_bucket(), resp_key,
-                 {**header, "calls": [{"response": c["response"], "finishReason": c.get("finishReason")}
-                                      for c in calls]})
+                 {**header, "outcome": outcome, "validationErrors": [c.get("errors") or [] for c in calls],
+                  "calls": [{"response": c["response"], "finishReason": c.get("finishReason")} for c in calls]})
     except Exception:  # noqa: BLE001 - debugging aid only
         pass

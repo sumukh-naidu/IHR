@@ -87,6 +87,7 @@ td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
     <button class="step" data-p="plan">4 · Interview plan</button>
     <button class="step" data-p="tts">5 · Text to speech</button>
     <button class="step" data-p="eval">6 · Answer evaluation</button>
+    <button class="step" data-p="report">7 · Final report</button>
   </nav>
 
   <div id="page-parse">
@@ -297,6 +298,32 @@ Describes the outcome or impact</textarea>
       <div class="panel" id="aaBody"></div>
     </section>
   </div>
+
+  <div id="page-report" class="hidden">
+    <section class="panel">
+      <h2>Interview turns <span class="muted small">(answers you evaluated in step 6, in order)</span></h2>
+      <div id="turnList"></div>
+      <h2 style="margin-top:14px">Technical events during the interview <span class="muted small">(optional — reported neutrally)</span></h2>
+      <div class="row" style="margin-top:4px" id="procInputs"></div>
+      <div class="row">
+        <label style="flex:1">Candidate name (redaction hint, optional) <input type="text" id="rName"></label>
+        <label>Model
+          <select id="reportProvider">
+            <option value="local">Local Qwen (llama-server)</option>
+            <option value="mock">Mock (fixture response)</option>
+          </select>
+        </label>
+        <button id="runReport">Generate final report</button>
+        <button class="ghost" id="clearTurns">Clear turns</button>
+        <span id="reportBusy" class="muted small hidden"><span class="spinner"></span> Writing report… ~40–60 s</span>
+      </div>
+      <div class="muted small" style="margin-top:8px">Scores are combined by a stand-in for core's §8.3 formulas (core does this in production). The AI only writes the narrative.</div>
+    </section>
+    <section id="reportResults" class="hidden">
+      <div id="reportBanner" class="banner"></div>
+      <div class="panel" id="reportBody"></div>
+    </section>
+  </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -401,10 +428,11 @@ function render(d){
 // ---------- step navigation ----------
 document.querySelectorAll(".step").forEach(b => b.onclick = () => {
   document.querySelectorAll(".step").forEach(x => x.classList.toggle("on", x === b));
-  ["parse","match","stt","plan","tts","eval"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
+  ["parse","match","stt","plan","tts","eval","report"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
   if(b.dataset.p === "match") refreshMatchCv();
   if(b.dataset.p === "plan") refreshPlanCv();
   if(b.dataset.p === "eval") refreshEval();
+  if(b.dataset.p === "report") refreshReport();
 });
 
 // ---------- CV_MATCH ----------
@@ -480,7 +508,7 @@ function renderMatch(d){
     ? `Completed in ${d.seconds}s — ${p.run.validationStatus}${p.run.repairAttempted ? " (after one repair)" : ""} · prompt v${p.run.promptVersion}`
     : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`);
   const calls = Object.entries(d.modelCalls || {}).map(([k,v]) => `<details><summary>${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
-  if(!ok){ $("matchBody").innerHTML = calls || ""; return; }
+  if(!ok){ $("matchBody").innerHTML = whyFailed(d.modelCalls) + (calls || ""); return; }
   const f = d.fit, req = Object.fromEntries(readReqs().map(r => [r.code, r]));
   const rows = f.criteria.map(c => `<tr>
       <td><b>${esc(c.requirementCode)}</b><div class="muted small">${esc(req[c.requirementCode]?.type)}</div></td>
@@ -545,7 +573,7 @@ function renderPlan(d){
     ? `Completed in ${d.seconds}s — ${p.run.validationStatus} · ${p.questionCount} questions, ${p.fallbackUsedCount} from fallback bank`
     : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`);
   const calls = Object.entries(d.modelCalls || {}).map(([k,v]) => `<details><summary>${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
-  if(!ok){ $("planBody").innerHTML = calls; return; }
+  if(!ok){ $("planBody").innerHTML = whyFailed(d.modelCalls) + calls; return; }
   const li = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
   lastPlan = d.plan;
   const qs = d.plan.questions.map(q => `
@@ -643,6 +671,14 @@ $("runEval").onclick = async () => {
     $("fuBody").innerHTML = `<div class="banner bad">Error: ${esc(e.message)}</div>`; $("aaBody").innerHTML = "";
   }finally{ $("runEval").disabled = false; $("evalBusy").classList.add("hidden"); }
 };
+function whyFailed(calls){
+  const resp = Object.entries(calls || {}).find(([k]) => k.endsWith("response.json"));
+  if(!resp) return "";
+  const errs = resp[1].validationErrors || [];
+  const block = (e, i) => e.length ? `<div class="small" style="margin-top:6px"><b>${i === 0 ? "First answer" : "After the repair"}:</b><ul>${e.map(x => `<li><code>${esc(x)}</code></li>`).join("")}</ul></div>` : "";
+  return errs.some(e => e.length) ? `<div class="panel" style="border-color:var(--bad)"><h2>Why it failed</h2>${errs.map(block).join("")}
+    <div class="muted small">Each line is a field path and the rule it broke. The full model responses are under “Model calls”.</div></div>` : "";
+}
 const callsHtml = c => Object.entries(c || {}).map(([k,v]) => `<details><summary class="small">${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
 function renderEval(d){
   $("evalResults").classList.remove("hidden");
@@ -663,8 +699,11 @@ function renderEval(d){
     if(b) b.onclick = () => { $("ttsText").value = o.followUp.text; document.querySelector('.step[data-p="tts"]').click(); $("runTts").click(); };
   }
   const aa = d.assessment, p = aa.payload, ok = aa.topic.endsWith(".completed");
-  if(!ok){ $("aaBody").innerHTML = `<h2>Answer assessment</h2><div class="banner bad">Failed: ${esc(p.errorCode)} (${esc(p.errorClass)}) — ${esc(p.message)}</div>${callsHtml(aa.calls)}`; return; }
+  if(!ok){ $("aaBody").innerHTML = `<h2>Answer assessment</h2><div class="banner bad">Failed: ${esc(p.errorCode)} (${esc(p.errorClass)}) — ${esc(p.message)}</div>${whyFailed(aa.calls)}${callsHtml(aa.calls)}`; return; }
   const a = aa.assessment;
+  if(aa.evalId){
+    evalTurns.push({id: aa.evalId, kind: $("eKind").value, question: $("eQuestion").value.trim(), scores: a.scores});
+  }
   const scoreCell = s => s.score == null ? `<span class="st UNKNOWN">not assessed</span><div class="muted small">${esc(s.notAssessedReason)}</div>`
     : `<span style="font-size:22px;font-weight:700">${s.score}</span><span class="muted"> / 5</span>`;
   const rows = a.scores.map(s => `<tr><td><b>${esc(s.competencyCode)}</b></td><td>${scoreCell(s)}</td>
@@ -682,7 +721,71 @@ function renderEval(d){
       <div><h2>Uncertainty</h2>${li(a.uncertainty, esc)}</div>
     </div>
     <div class="muted small" style="margin-top:8px">The AI never produces an overall score or a hiring recommendation; core combines per-answer scores (§8.3–8.4).</div>
+    <div class="row"><span class="muted small">Added to the interview as turn T${evalTurns.length}.</span>
+      <button class="ghost" onclick="document.querySelector('.step[data-p=&quot;stt&quot;]').click()">Record the next answer</button>
+      <button onclick="document.querySelector('.step[data-p=&quot;report&quot;]').click()">Go to final report →</button></div>
     <h2 style="margin-top:12px">Model calls</h2>${callsHtml(aa.calls) || '<span class="muted">none</span>'}`;
+}
+
+// ---------- FINAL_REPORT ----------
+let evalTurns = [];   // [{id, kind, question, scores}]
+const PROC = ["TAB_HIDDEN","WINDOW_BLUR","NETWORK_OFFLINE","SESSION_PAUSED","SESSION_RESUMED","PAGE_RELOADED","MIC_TRACK_ENDED","TECHNICAL_ISSUE_REPORTED"];
+$("procInputs").innerHTML = PROC.map(k => `<label>${k}<input type="number" min="0" value="0" data-k="${k}" class="pc" style="width:90px"></label>`).join("");
+function refreshReport(){
+  $("turnList").innerHTML = evalTurns.length ? evalTurns.map((t, i) => `
+    <label class="small" style="flex-direction:row;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);color:var(--ink)">
+      <input type="checkbox" class="tsel" data-i="${i}" checked style="width:auto;margin-top:3px">
+      <span><b>T${i + 1}</b> (${esc(t.kind)}) ${esc(t.question)}<br><span class="muted">${t.scores.map(s => `${esc(s.competencyCode)}: ${s.score ?? "not assessed"}`).join(" · ") || "not scored"}</span></span>
+    </label>`).join("")
+    : `<span style="color:var(--bad)">No evaluated answers yet. In step 3 transcribe an answer, then run step 6 — repeat for each question of the interview.</span>`;
+  $("runReport").disabled = !evalTurns.length;
+}
+$("clearTurns").onclick = () => { evalTurns = []; refreshReport(); };
+$("runReport").onclick = async () => {
+  $("runReport").disabled = true; $("reportBusy").classList.remove("hidden");
+  try{
+    const ids = [...document.querySelectorAll(".tsel:checked")].map(c => evalTurns[+c.dataset.i].id);
+    if(!ids.length) throw new Error("Tick at least one turn.");
+    const proctoring = Object.fromEntries([...document.querySelectorAll(".pc")].map(i => [i.dataset.k, parseInt(i.value || "0", 10)]));
+    const r = await fetch("/api/report", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({evalIds: ids, proctoring, provider: $("reportProvider").value, candidateName: $("rName").value.trim()})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderReport(d);
+  }catch(e){
+    $("reportResults").classList.remove("hidden");
+    $("reportBanner").className = "banner bad"; $("reportBanner").textContent = "Error: " + e.message; $("reportBody").innerHTML = "";
+  }finally{ $("runReport").disabled = false; $("reportBusy").classList.add("hidden"); }
+};
+function renderReport(d){
+  $("reportResults").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed"), cs = d.computedScores;
+  $("reportBanner").className = "banner " + (ok ? "ok" : "bad");
+  $("reportBanner").textContent = ok ? `Report written in ${d.seconds}s — ${p.run.validationStatus}${p.run.repairAttempted ? " (after one repair)" : ""} · ${d.turns.length} turns`
+                                     : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`;
+  const scoreRows = cs.competencies.map(c => `<tr><td>${esc(c.code)}</td><td>${c.score ?? '<span class="muted">not assessed</span>'}</td><td class="muted">${c.assessedTurnCount}</td></tr>`).join("");
+  const scoresHtml = `<h2>Computed scores <span class="muted small">(core — attached unchanged)</span></h2>
+    ${kv({"overall": cs.overallScore ?? "—", completion: cs.completionState, "evidence level": cs.evidenceLevel})}
+    <div class="tablewrap" style="margin-top:8px"><table><tr><th>Competency</th><th>Score</th><th>Turns</th></tr>${scoreRows}</table></div>`;
+  if(!ok){ $("reportBody").innerHTML = whyFailed(d.calls) + scoresHtml + `<h2 style="margin-top:14px">Model calls</h2>${callsHtml(d.calls) || '<span class="muted">none</span>'}`; return; }
+  const r = d.report;
+  const refs = rs => rs.length ? ` <span class="muted small">${rs.map(x => `${x.turn} [${x.segmentIndex}]`).join(", ")}</span>` : "";
+  const items = (arr, f) => arr.length ? `<ul>${arr.map(x => `<li>${f(x)}</li>`).join("")}</ul>` : `<span class="muted">none</span>`;
+  $("reportBody").innerHTML = `
+    <h2>Summary</h2><p>${esc(r.summary)}</p>
+    <h2 style="margin-top:14px">Competency narratives</h2>
+    ${r.competencyNarratives.map(n => `<div class="role"><b>${esc(n.competencyCode)}</b>${esc(n.narrative)}${refs(n.evidenceRefs)}</div>`).join("")}
+    <div class="grid">
+      <div><h2>Strengths</h2>${items(r.strengths, x => esc(x.text) + refs(x.evidenceRefs))}</div>
+      <div><h2>Gaps</h2>${items(r.gaps, x => esc(x.text) + refs(x.evidenceRefs))}</div>
+      <div><h2>Reviewer focus areas</h2>${items(r.reviewerFocusAreas, esc)}</div>
+      <div><h2>Limitations</h2>${items(r.limitations, esc)}</div>
+    </div>
+    <div style="margin-top:14px">${scoresHtml}</div>
+    <h2 style="margin-top:14px">Turns</h2>${items(d.turns, t => `<b>${t.label}</b> (${esc(t.kind)}) ${esc(t.question)}`)}
+    <div class="muted small" style="margin-top:8px">The narrative contains no numbers of its own; references like T1 [2] point to turn 1, transcript segment 2.</div>
+    <h2 style="margin-top:14px">Model calls</h2>${callsHtml(d.calls) || '<span class="muted">none</span>'}
+    <h2 style="margin-top:14px">Raw JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(r, null, 2))}</pre></details>`;
 }
 
 // ---------- STT ----------

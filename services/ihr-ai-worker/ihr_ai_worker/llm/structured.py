@@ -38,6 +38,7 @@ class StructuredResult:
     results: list[LlmResult]
     repaired: bool
     requests: list[list[dict]] = field(default_factory=list)   # messages sent per call (A-12 capture)
+    errors: list[list[str]] = field(default_factory=list)      # validation errors per call (A-12 capture)
 
     @property
     def provider_attempts(self) -> int:
@@ -79,6 +80,14 @@ def _parse(result: LlmResult, validate: Callable[[dict], Validation]) -> tuple[d
     return value, validate(value)
 
 
+def _count_policy(task: str, check: Validation) -> None:
+    if check.kind == "policy":
+        from ..pipelines.metrics import policy_rejection
+        rules = {e.split("policy ")[-1] if "policy " in e else "OUTPUT_POLICY" for e in check.errors}
+        for r in rules:
+            policy_rejection(task, r.strip())
+
+
 def call_structured(client: LlmClient, *, task: str, params: TaskParams, messages: list[dict],
                     deadline: datetime, validate: Callable[[dict], Validation],
                     allow_repair: bool = True) -> StructuredResult:
@@ -91,12 +100,15 @@ def call_structured(client: LlmClient, *, task: str, params: TaskParams, message
 
     first = call(messages, params.max_tokens)
     value, check = _parse(first, validate)
+    _count_policy(task, check)
     if value is not None and check.kind is None:
         validations.labels(task, "valid").inc()
-        return StructuredResult(value, [first], repaired=False, requests=[messages])
+        return StructuredResult(value, [first], repaired=False, requests=[messages], errors=[[]])
     if not allow_repair:
         validations.labels(task, "invalid").inc()
-        raise ProcessingError(_FINAL_CODE[check.kind or "schema"], "Model output failed validation.")
+        err = ProcessingError(_FINAL_CODE[check.kind or "schema"], "Model output failed validation.")
+        err.calls = StructuredResult({}, [first], False, [messages], [check.errors])
+        raise err
 
     max_tokens = params.max_tokens
     if first.finish_reason == "length":
@@ -108,8 +120,12 @@ def call_structured(client: LlmClient, *, task: str, params: TaskParams, message
     ]
     second = call(repair_msgs, max_tokens)
     value, check2 = _parse(second, validate)
+    _count_policy(task, check2)
     if value is not None and check2.kind is None:
         validations.labels(task, "repaired").inc()
-        return StructuredResult(value, [first, second], repaired=True, requests=[messages, repair_msgs])
+        return StructuredResult(value, [first, second], repaired=True, requests=[messages, repair_msgs],
+                                errors=[check.errors, []])
     validations.labels(task, "invalid").inc()
-    raise ProcessingError(_FINAL_CODE[check2.kind or "schema"], "Model output failed validation after one repair.")
+    err = ProcessingError(_FINAL_CODE[check2.kind or "schema"], "Model output failed validation after one repair.")
+    err.calls = StructuredResult({}, [first, second], True, [messages, repair_msgs], [check.errors, check2.errors])
+    raise err

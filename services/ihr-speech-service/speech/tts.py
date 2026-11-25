@@ -20,7 +20,7 @@ from ihr_worker_common import contracts
 from ihr_worker_common.errors import ProcessingError
 from ihr_worker_common.events import worker_version
 from ihr_worker_common.log import get_logger
-from ihr_worker_common.metrics import counter, histogram
+from ihr_worker_common.metrics import counter, gauge, histogram
 from ihr_worker_common.processor import HandlerResult, JobContext
 from ihr_worker_common.storage import object_ref
 
@@ -43,8 +43,9 @@ class ProviderFailed(Exception):
 class Breaker:
     """5 consecutive failures -> open 60 s (§11.2)."""
 
-    def __init__(self, threshold: int = 5, open_s: float = 60.0, clock=time.monotonic) -> None:
+    def __init__(self, threshold: int = 5, open_s: float = 60.0, clock=time.monotonic, name: str | None = None) -> None:
         self.threshold, self.open_s, self.clock = threshold, open_s, clock
+        self._gauge = gauge("ihr_provider_circuit_open", "Circuit state (0/1)", ("provider",)).labels(name) if name else None
         self.failures, self.opened_at = 0, None
         self._lock = threading.Lock()
 
@@ -55,18 +56,25 @@ class Breaker:
             if self.clock() - self.opened_at >= self.open_s:   # half-open: allow a trial call
                 self.opened_at = None
                 self.failures = self.threshold - 1
+                self._set(0)
                 return True
             return False
 
     def success(self) -> None:
         with self._lock:
             self.failures, self.opened_at = 0, None
+            self._set(0)
 
     def failure(self) -> None:
         with self._lock:
             self.failures += 1
             if self.failures >= self.threshold:
                 self.opened_at = self.clock()
+                self._set(1)
+
+    def _set(self, v: int) -> None:
+        if self._gauge is not None:
+            self._gauge.set(v)
 
 
 @lru_cache(maxsize=1)
@@ -176,7 +184,7 @@ class SynthesisHandler:
 
     def __init__(self, providers: list) -> None:
         self.providers = providers
-        self.breakers = {p.name: Breaker() for p in providers}
+        self.breakers = {p.name: Breaker(name=p.name) for p in providers}
         self._req = counter("ihr_tts_requests_total", "TTS requests", ("provider", "outcome"))
         self._lat = histogram("ihr_tts_latency_seconds", "TTS provider latency", ("provider",))
         self._hits = counter("ihr_tts_cache_hits_total", "TTS cache hits", ())

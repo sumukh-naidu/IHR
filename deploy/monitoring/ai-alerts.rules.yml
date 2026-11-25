@@ -1,0 +1,69 @@
+# Prometheus alert rules for the AI team on-call (AI Specification v1.1 §12.2).
+# Metric names: §12.1. Job metrics come from py-worker-common (prefix ihr_ai / ihr_speech).
+groups:
+  - name: ihr-ai
+    rules:
+      - alert: FollowupLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(ihr_ai_llm_latency_seconds_bucket{task="FOLLOWUP"}[10m]))) > 6
+        for: 10m
+        labels: {severity: page, team: ai}
+        annotations:
+          summary: "FOLLOWUP p95 provider latency > 6 s (S-09 turn budget at risk)"
+          runbook: docs/runbooks/kimi-outage.md
+
+      - alert: SttLatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(ihr_speech_job_duration_seconds_bucket{task="TRANSCRIPTION"}[10m]))) > 6
+        for: 10m
+        labels: {severity: page, team: ai}
+        annotations:
+          summary: "STT p95 job duration > 6 s"
+          runbook: docs/runbooks/gpu-failure.md
+
+      - alert: AiFailureRate
+        expr: |
+          sum by (task) (increase(ihr_ai_jobs_total{outcome="failed"}[30m]))
+            / clamp_min(sum by (task) (increase(ihr_ai_jobs_total[30m])), 1) > 0.05
+        labels: {severity: page, team: ai}
+        annotations:
+          summary: "{{ $labels.task }}: more than 5 % of jobs failed in 30 min"
+          runbook: docs/runbooks/kimi-outage.md
+
+      - alert: RepairRateHigh
+        expr: |
+          sum by (task) (increase(ihr_ai_validation_total{result="repaired"}[1d]))
+            / clamp_min(sum by (task) (increase(ihr_ai_validation_total[1d])), 1) > 0.15
+        labels: {severity: ticket, team: ai}
+        annotations:
+          summary: "{{ $labels.task }}: repair rate > 15 % over 1 day (prompt quality)"
+          runbook: docs/runbooks/prompt-rollback.md
+
+      - alert: ProviderCircuitOpen
+        expr: max by (provider) (ihr_provider_circuit_open) == 1
+        for: 2m
+        labels: {severity: page, team: ai}
+        annotations:
+          summary: "Circuit for {{ $labels.provider }} open > 2 min"
+          runbook: docs/runbooks/kimi-outage.md
+
+      # Month-to-date is approximated by a rolling 30-day window; core's ai_runs table is the billing source of truth.
+      - alert: TokenBudget80
+        expr: sum(increase(ihr_ai_tokens_total[30d])) >= 0.8 * max(ihr_ai_token_budget_monthly)
+        labels: {severity: ticket, team: ai}
+        annotations: {summary: "Kimi tokens ≥ 80 % of the monthly budget"}
+      - alert: TokenBudget100
+        expr: sum(increase(ihr_ai_tokens_total[30d])) >= max(ihr_ai_token_budget_monthly)
+        labels: {severity: page, team: ai}
+        annotations: {summary: "Kimi tokens ≥ 100 % of the monthly budget"}
+
+      - alert: InjectionSpike
+        expr: sum(increase(ihr_ai_injection_flags_total[1h])) > 10
+        labels: {severity: ticket, team: ai}
+        annotations: {summary: "More than 10 prompt-injection flags in 1 h"}
+
+      - alert: GpuUnavailable
+        expr: sum(kube_deployment_status_replicas_ready{deployment="ihr-speech-stt"}) == 0
+        for: 2m
+        labels: {severity: page, team: ai}
+        annotations:
+          summary: "No ready STT (GPU) pods for 2 min — core falls back to next planned question"
+          runbook: docs/runbooks/gpu-failure.md

@@ -29,7 +29,8 @@ from ..policy import questions as qpolicy
 from ..privacy import injection
 from ..prompts import PromptRegistry
 from ..tasks import TASKS, generated_bucket
-from .common import capture_calls, run_meta
+from . import metrics
+from .common import capture_calls, run_meta, capture_failure
 from .plan_allocation import allocate, fallback_question
 
 log = get_logger("ihr.interview_plan")
@@ -71,13 +72,18 @@ class InterviewPlanHandler:
         self.prompt = prompts.get(self.spec.prompt_id)
         self.capture = debug_capture_enabled
         self.clock = clock
-        self._fallback = counter("ihr_ai_plan_fallback_questions_total", "Plan questions from the fallback bank",
-                                 ("reason",))
 
     def output_location(self, payload: dict) -> tuple[str, str]:
         return generated_bucket(), self.spec.output_key(payload)
 
     def handle(self, ctx: JobContext) -> HandlerResult:
+        try:
+            return self._handle(ctx)
+        except ProcessingError as e:
+            capture_failure(self, ctx, e)
+            raise
+
+    def _handle(self, ctx: JobContext) -> HandlerResult:
         t0 = time.monotonic()
         p = ctx.payload
         n = p["mainQuestionCount"]
@@ -103,6 +109,10 @@ class InterviewPlanHandler:
             result = call_structured(self.llm, task=self.task, params=TASK_PARAMS[self.task], messages=messages,
                                      deadline=ctx.deadline, validate=validator.validate)
             plan_q, invalid = validator.final(result.value)
+            for i in sorted(invalid):
+                for rule in {m.split("question policy ")[1] for m in validator.question_errors(result.value["questions"]).get(i, [])
+                             if "question policy " in m}:
+                    metrics.policy_rejection(self.task, rule)
         except ProcessingError as e:
             if e.code not in ("OUTPUT_SCHEMA_INVALID", "OUTPUT_SEMANTIC_INVALID", "OUTPUT_POLICY_VIOLATION"):
                 raise
@@ -117,7 +127,7 @@ class InterviewPlanHandler:
                 fb = fallback_question(comps[slots[i]], used, p["maxAnswerSeconds"], i + 1)
                 if fb is None:
                     raise ProcessingError("OUTPUT_SEMANTIC_INVALID", "No fallback question left for a competency.")
-                self._fallback.labels("full" if len(invalid) == n else "replaced").inc()
+                metrics.fallback_question("full_plan" if len(invalid) == n else "invalid_question")
                 final.append(fb)
             else:
                 q = copy.deepcopy(q)

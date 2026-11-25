@@ -204,8 +204,8 @@ class TranscriptionHandler:
 
     def __init__(self, engine: WhisperEngine) -> None:
         self.engine = engine
-        self._dur = histogram("ihr_stt_duration_seconds", "STT processing time", ())
-        self._audio = histogram("ihr_stt_audio_seconds", "Audio duration", ())
+        self._dur = histogram("ihr_stt_duration_seconds", "STT processing time", ("model",))
+        self._audio = histogram("ihr_stt_audio_seconds", "Audio duration", ("model",))
         self._flags = counter("ihr_stt_quality_flags_total", "STT quality flags", ("flag",))
 
     def output_location(self, payload: dict) -> tuple[str, str]:
@@ -238,8 +238,8 @@ class TranscriptionHandler:
         ref = put_json(ctx.storage, generated_bucket(), transcript_key(p), transcript)
 
         elapsed = time.monotonic() - t0
-        self._dur.observe(elapsed)
-        self._audio.observe(duration / 1000)
+        self._dur.labels(self.engine.cfg.model).observe(elapsed)
+        self._audio.labels(self.engine.cfg.model).observe(duration / 1000)
         for f in flags:
             self._flags.labels(f).inc()
         run = {"provider": "faster-whisper", "model": self.engine.cfg.model, "promptId": None, "promptVersion": None,

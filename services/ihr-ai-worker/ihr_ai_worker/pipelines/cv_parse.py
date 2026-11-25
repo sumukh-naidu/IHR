@@ -4,6 +4,7 @@ deterministic enrichment -> write profile and text objects -> .completed.
 from __future__ import annotations
 
 import copy
+from dataclasses import dataclass
 import time
 from datetime import datetime
 from typing import Callable
@@ -30,6 +31,8 @@ from ..privacy import injection
 from ..privacy.identity import extract_identity
 from ..privacy.redaction import redact
 from ..prompts import PromptRegistry
+from . import metrics
+from .common import capture_failure
 from ..tasks import TASKS, cv_text_key, generated_bucket
 
 log = get_logger("ihr.cv_parse")
@@ -41,6 +44,16 @@ MAX_MODEL_CHARS = 40_000        # A-16
 SKILL_DROP_LIMIT = 0.20         # §7.1: drop failing skills if <= 20 % fail, otherwise repair
 NON_ENGLISH_LIMIT = 0.30        # §6.2
 CONTEXT_SHRINK = 0.75           # §4.4: shorten input by 25 % once on context length
+
+
+@dataclass
+class Prepared:
+    doc: object
+    warnings: set
+    identity: dict
+    red: object
+    text: str
+    truncated: bool
 
 
 class CvParseHandler:
@@ -87,9 +100,15 @@ class CvParseHandler:
         return doc, warnings | doc.warnings
 
     def handle(self, ctx: JobContext) -> HandlerResult:
-        t0 = time.monotonic()
-        payload = ctx.payload
-        data = read_verified(ctx.storage, payload["document"])
+        try:
+            return self._handle(ctx)
+        except ProcessingError as e:
+            capture_failure(self, ctx, e)
+            raise
+
+    def prepare_text(self, payload: dict, data: bytes) -> "Prepared":
+        """§6.1 steps 2-7: scan, extract, normalise, identity (A-17), redaction (§5.2), caps (A-16), escaping.
+        No model call (used by the handler and by the offline redaction gates)."""
         doc, warnings = self._extract(payload, data)
 
         pages = normalise_pages(doc.pages)
@@ -117,6 +136,15 @@ class CvParseHandler:
             warnings.add("TEXT_TRUNCATED")
             truncated = True
         text = injection.escape_tags(text)
+        return Prepared(doc, warnings, identity, red, text, truncated)
+
+    def _handle(self, ctx: JobContext) -> HandlerResult:
+        t0 = time.monotonic()
+        payload = ctx.payload
+        data = read_verified(ctx.storage, payload["document"])
+        pre = self.prepare_text(payload, data)
+        doc, warnings, identity, red, text, truncated = (pre.doc, pre.warnings, pre.identity, pre.red, pre.text,
+                                                        pre.truncated)
 
         # ---- Kimi -----------------------------------------------------------------------------------
         current_month = self.clock().strftime("%Y-%m")
@@ -148,6 +176,8 @@ class CvParseHandler:
         warnings |= set(profile["extractionWarnings"])
 
         ordered = sorted(warnings)
+        if "PROMPT_INJECTION_SUSPECTED" in warnings:
+            metrics.injection_flag(self.task)
         profile["identity"] = identity
         profile["derived"] = {
             "totalExperienceMonths": total,

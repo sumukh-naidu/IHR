@@ -13,6 +13,7 @@ import copy
 import time
 
 from ihr_worker_common import contracts
+from ihr_worker_common.errors import ProcessingError
 from ihr_worker_common.events import worker_version
 from ihr_worker_common.log import get_logger
 from ihr_worker_common.metrics import counter
@@ -28,7 +29,8 @@ from ..privacy import injection
 from ..privacy.redaction import redact_transcript
 from ..prompts import PromptRegistry
 from ..tasks import TASKS, generated_bucket
-from .common import capture_calls, run_meta
+from . import metrics
+from .common import capture_calls, run_meta, capture_failure
 from .transcripts import load_segments, segment_lines
 
 log = get_logger("ihr.answer_assessment")
@@ -68,6 +70,13 @@ class AnswerAssessmentHandler:
         return generated_bucket(), self.spec.output_key(payload)
 
     def handle(self, ctx: JobContext) -> HandlerResult:
+        try:
+            return self._handle(ctx)
+        except ProcessingError as e:
+            capture_failure(self, ctx, e)
+            raise
+
+    def _handle(self, ctx: JobContext) -> HandlerResult:
         t0 = time.monotonic()
         p = ctx.payload
         unscored = p["turnKind"] in UNSCORED_TURNS
@@ -100,6 +109,8 @@ class AnswerAssessmentHandler:
             flags.append("PROMPT_INJECTION_SUSPECTED")
             self._adjust.labels("injection").inc()
         out["answerFlags"] = flags
+        if "PROMPT_INJECTION_SUSPECTED" in flags:
+            metrics.injection_flag(self.task)
         order = {c: i for i, c in enumerate(codes)}
         out["scores"].sort(key=lambda s: order[s["competencyCode"]])
         debug_capture.capture(ctx.storage, enabled=self.capture, job_id=ctx.job_id, task=self.task,

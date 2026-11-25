@@ -1,0 +1,13 @@
+{
+  "files": {
+    "answer_assessment/v1.0.0.md": "820feb2fa2ae44002a421e7ecf2e3221f1d475ce896948420aec280b321d4f37",
+    "base_rules/v1.0.0.md": "ba8e7bcabe5bdf69b97e5312ec0c3ea53c985d3a1d652cd0f506fa9b383f1529",
+    "cv_match/v1.0.0.md": "d33e81be8bf6a873247770f8cffca2ec0f06cae3281bf683746c7458fc5940ff",
+    "cv_match/v1.0.1.md": "4d05c491ca6e8ccf825f672e5316cef727a308136e7bbe5ad19665402ee58d8e",
+    "cv_parse/v1.0.0.md": "a409702155794b7fc95304848319c6dd3babb7b7b5891202cc6d8715f3f20517",
+    "final_report/v1.0.0.md": "63bcaa101acdf6497f7166dd4c1fb9d59ebc4ff4c8c7fc5ef1ec77852c298a0e",
+    "followup_decision/v1.0.0.md": "c80995fd09060f66c2fadf517c9a935c962febf3dfb7dbc2335843e318e709fb",
+    "interview_plan/v1.0.0.md": "0202c4f9b3b18627f9e98c592ee0401600cb44952bbfe51f66ab445a598b7d84"
+  },
+  "frozen": null
+}

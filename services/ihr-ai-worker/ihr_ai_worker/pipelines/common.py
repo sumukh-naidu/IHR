@@ -25,5 +25,17 @@ def run_meta(llm, prompt, result, slot: str, t0: float) -> dict:
 
 
 def capture_calls(result) -> list[dict]:
-    return [{"messages": m, "response": r.content, "finishReason": r.finish_reason}
-            for m, r in zip(result.requests, result.results)]
+    errs = result.errors or [[] for _ in result.results]
+    return [{"messages": m, "response": r.content, "finishReason": r.finish_reason, "errors": e}
+            for m, r, e in zip(result.requests, result.results, errs)]
+
+
+def capture_failure(handler, ctx, err) -> None:
+    """A-12: also keep the model calls and validation errors of a job that failed validation."""
+    from .. import debug_capture
+    result = getattr(err, "calls", None)
+    if result is None:
+        return
+    debug_capture.capture(ctx.storage, enabled=handler.capture, job_id=ctx.job_id, task=handler.task,
+                          prompt_id=handler.prompt.prompt_id, prompt_version=handler.prompt.version,
+                          calls=capture_calls(result), outcome=err.code)

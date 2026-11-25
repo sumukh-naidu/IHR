@@ -27,7 +27,8 @@ from ..policy import language, questions
 from ..privacy import injection
 from ..prompts import PromptRegistry
 from ..tasks import TASKS, generated_bucket
-from .common import capture_calls, run_meta
+from . import metrics
+from .common import capture_calls, run_meta, capture_failure
 
 log = get_logger("ihr.cv_match")
 
@@ -58,7 +59,6 @@ class CvMatchHandler:
         self.prompt = prompts.get(self.spec.prompt_id)
         self.capture = debug_capture_enabled
         self.clock = clock
-        self._dropped_q = counter("ihr_ai_policy_question_dropped_total", "Questions dropped by policy", ("task",))
         self._dropped_quotes = counter("ihr_ai_evidence_dropped_total", "Unverified quotes dropped", ("task",))
         self._overrides = counter("ihr_ai_experience_override_total", "A-20 deterministic overrides", ("changed",))
 
@@ -66,6 +66,13 @@ class CvMatchHandler:
         return generated_bucket(), self.spec.output_key(payload)
 
     def handle(self, ctx: JobContext) -> HandlerResult:
+        try:
+            return self._handle(ctx)
+        except ProcessingError as e:
+            capture_failure(self, ctx, e)
+            raise
+
+    def _handle(self, ctx: JobContext) -> HandlerResult:
         t0 = time.monotonic()
         p = ctx.payload
         profile = json.loads(read_verified(ctx.storage, p["cvProfile"]))
@@ -120,9 +127,13 @@ class CvMatchHandler:
                               f"No dated employment history is stated to compare against {r['minMonths']} months required.")
 
         # A-21: failing clarification questions are dropped
-        kept = [q for q in fit["clarificationQuestions"] if questions.passes(q)]
-        if len(kept) != len(fit["clarificationQuestions"]):
-            self._dropped_q.labels(self.task).inc(len(fit["clarificationQuestions"]) - len(kept))
+        kept = []
+        for q in fit["clarificationQuestions"]:
+            rules = questions.violations(q)
+            for r in rules:
+                metrics.policy_rejection(self.task, r)
+            if not rules:
+                kept.append(q)
         fit["clarificationQuestions"] = kept
 
         warnings = set(fit["warnings"])
@@ -131,6 +142,8 @@ class CvMatchHandler:
                 warnings.add(dst)
         if injection.detect(text):
             warnings.add("PROMPT_INJECTION_SUSPECTED")
+        if "PROMPT_INJECTION_SUSPECTED" in warnings:
+            metrics.injection_flag(self.task)
         fit["warnings"] = sorted(warnings)
         contracts.validate_artefact(SCHEMA, fit)
 

@@ -38,6 +38,7 @@ from ihr_ai_worker.pipelines.interview_plan import InterviewPlanHandler  # noqa:
 from ihr_ai_worker.pipelines import followup as followup_mod  # noqa: E402
 from ihr_ai_worker.pipelines.answer_assessment import AnswerAssessmentHandler  # noqa: E402
 from ihr_ai_worker.pipelines.followup import FollowupHandler  # noqa: E402
+from ihr_ai_worker.pipelines.final_report import FinalReportHandler  # noqa: E402
 from speech.tts import SynthesisHandler, build_providers  # noqa: E402
 from speech.tts_mock import MockSynthesisHandler  # noqa: E402
 from speech.stt import TranscriptionHandler, WhisperConfig, WhisperEngine  # noqa: E402
@@ -47,7 +48,7 @@ from ihr_ai_worker.prompts import load_registry  # noqa: E402
 LOCAL_URL = os.environ.get("LOCAL_LLM_BASE_URL", "http://127.0.0.1:8081/v1")
 LOCAL_MODEL = os.environ.get("LOCAL_LLM_MODEL", "qwen3.6-35b-a3b")
 # local inference is slower than Kimi; widen only the per-call timeout for this tool
-for _t in ("CV_PARSE", "CV_MATCH", "INTERVIEW_PLAN", "FOLLOWUP", "ANSWER_ASSESSMENT"):
+for _t in ("CV_PARSE", "CV_MATCH", "INTERVIEW_PLAN", "FOLLOWUP", "ANSWER_ASSESSMENT", "FINAL_REPORT"):
     base.TASK_PARAMS[_t] = dataclasses.replace(base.TASK_PARAMS[_t], timeout_s=600)
 
 REGISTRY = load_registry(ROOT / "docs/prompts/active.yaml")
@@ -59,6 +60,8 @@ TTS_STORAGE = InMemoryStorage()      # shared so repeated texts show the cache h
 _TTS_REAL: SynthesisHandler | None = None
 FU_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/followup_decision/request.json").read_text())
 AA_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/answer_assessment/request.json").read_text())
+REPORT_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/final_report/request.json").read_text())
+EVALS: "OrderedDict[str, dict]" = OrderedDict()          # evalId -> one assessed turn (per browser tab)
 TRANSCRIPTS: "OrderedDict[str, dict]" = OrderedDict()   # transcriptId -> storage, ref, quality (per browser tab)
 STT_REQUEST = json.loads((ROOT / "contracts/fixtures/speech/transcription/request.json").read_text())
 WHISPER_MODEL = os.environ.get("UI_WHISPER_MODEL", "small.en")
@@ -245,8 +248,79 @@ async def evaluate(request: Request) -> JSONResponse:
                "calls": _calls(storage, p["jobId"])}
         if o.topic.endswith(".completed"):
             res["assessment"] = json.loads(storage.get_bytes(pay["output"]["bucket"], pay["output"]["key"]))
+            eid = uuid.uuid4().hex
+            EVALS[eid] = {"storage": storage, "transcriptRef": t["ref"], "assessmentRef": pay["output"],
+                          "question": q, "kind": p["turnKind"]}
+            while len(EVALS) > 50:
+                EVALS.popitem(last=False)
+            res["evalId"] = eid
         out["assessment"] = res
     return JSONResponse(out)
+
+
+def computed_scores_stand_in(comps: list[dict], assessments: list[dict]) -> dict:
+    """Stand-in for core's §8.3 formulas (core owns this in production; the AI never computes these)."""
+    by: dict[str, list[int]] = {}
+    for a in assessments:
+        for sc in a["scores"]:
+            if sc["score"] is not None:
+                by.setdefault(sc["competencyCode"], []).append(sc["score"])
+    out = [{"code": c["code"], "score": round(sum(by[c["code"]]) / len(by[c["code"]]), 1) if by.get(c["code"]) else None,
+            "assessedTurnCount": len(by.get(c["code"], []))} for c in comps]
+    assessed = [c for c in comps if by.get(c["code"])]
+    w = sum(c["weight"] for c in assessed)
+    overall = round(sum(c["weight"] * (sum(by[c["code"]]) / len(by[c["code"]]) - 1) / 4 for c in assessed) / w * 100, 1) if w else None
+    complete = w >= 70 and all(by.get(c["code"]) for c in comps if c["mandatory"])
+    if overall is None or not assessed:
+        level = "INSUFFICIENT_EVIDENCE"
+    else:
+        level = "STRONG_EVIDENCE" if overall >= 80 else "MODERATE_EVIDENCE" if overall >= 60 else "LIMITED_EVIDENCE"
+    return {"competencies": out, "overallScore": overall, "completionState": "COMPLETE" if complete else "INCOMPLETE",
+            "evidenceLevel": level}
+
+
+@app.post("/api/report")
+async def report(request: Request) -> JSONResponse:
+    import anyio
+    body = await request.json()
+    evals = [EVALS[e] for e in body.get("evalIds", []) if e in EVALS]
+    if not evals:
+        return JSONResponse({"error": "Evaluate at least one answer in step 6 first (or again: the server was restarted)."}, 400)
+    storage = InMemoryStorage()        # one interview: copy each turn's transcript + assessment into it
+    env = json.loads(json.dumps(REPORT_REQUEST))
+    p = env["payload"]
+    keep = ("code", "name", "description", "weight", "mandatory", "anchors", "fallbackQuestions")
+    comps = [{k: c[k] for k in keep} for c in PLAN_REQUEST["payload"]["competencies"]]
+    turns, assessments = [], []
+    for n, e in enumerate(evals, 1):
+        tid = str(uuid.uuid4())
+        tr_bytes = e["storage"].get_bytes(e["transcriptRef"]["bucket"], e["transcriptRef"]["key"])
+        aa_bytes = e["storage"].get_bytes(e["assessmentRef"]["bucket"], e["assessmentRef"]["key"])
+        assessments.append(json.loads(aa_bytes))
+        tref = storage.put_bytes("ihr-generated-private", f"interview/ui/transcripts/{tid}.json", tr_bytes, "application/json")
+        aref = storage.put_bytes("ihr-generated-private", f"interview/ui/assessments/{tid}.json", aa_bytes, "application/json")
+        turns.append({"turnId": tid, "turnNumber": n, "kind": e["kind"], "questionText": e["question"]["text"],
+                      "competencyCodes": e["question"]["competencyCodes"], "transcript": tref, "assessment": aref,
+                      "transcriptStatus": "SUCCEEDED", "assessmentStatus": "SUCCEEDED"})
+    computed = computed_scores_stand_in(comps, assessments)
+    p.update(competencies=comps, turns=turns, computedScores=computed,
+             proctoringSummary={k: int(v) for k, v in (body.get("proctoring") or {}).items() if int(v or 0) > 0},
+             redactionHints={"fullName": body.get("candidateName") or None, "email": None, "phone": None})
+    try:
+        from ihr_worker_common import contracts
+        contracts.validate_payload("ihr.interview.final-report.requested", p)
+    except Exception as ex:  # noqa: BLE001
+        return JSONResponse({"error": f"Request is not valid: {ex}"}, 400)
+    llm = MockLlmClient() if body.get("provider") == "mock" else LOCAL
+    proc = Processor(FinalReportHandler(llm, REGISTRY), storage, "ihr-ai-worker", "ui")
+    t0 = time.monotonic()
+    o, pay = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+    res = {"topic": o.topic, "seconds": round(time.monotonic() - t0, 1), "payload": pay, "computedScores": computed,
+           "turns": [{"label": f"T{t['turnNumber']}", "kind": t["kind"], "question": t["questionText"]} for t in turns],
+           "calls": _calls(storage, p["jobId"])}
+    if o.topic.endswith(".completed"):
+        res["report"] = json.loads(storage.get_bytes(pay["output"]["bucket"], pay["output"]["key"]))
+    return JSONResponse(res)
 
 
 def _calls(storage, job_id: str) -> dict:

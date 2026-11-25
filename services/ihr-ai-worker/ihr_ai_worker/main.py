@@ -18,6 +18,7 @@ from .llm.kimi import build_llm_client
 from .mock_handlers import MockTaskHandler
 from .pipelines.answer_assessment import AnswerAssessmentHandler
 from .pipelines.cv_match import CvMatchHandler
+from .pipelines.final_report import FinalReportHandler
 from .pipelines.followup import FollowupHandler
 from .pipelines.cv_parse import CvParseHandler
 from .pipelines.interview_plan import InterviewPlanHandler
@@ -42,6 +43,8 @@ def real_handler(spec, cfg: AiWorkerConfig, llm, prompts):
         return FollowupHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
     if spec.task == "ANSWER_ASSESSMENT":
         return AnswerAssessmentHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
+    if spec.task == "FINAL_REPORT":
+        return FinalReportHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
     return None
 
 
@@ -54,10 +57,6 @@ def build_processors(cfg: AiWorkerConfig, storage) -> list[Processor]:
     for spec in tasks_for_role(cfg.worker_role):
         handler = real_handler(spec, cfg, llm, prompts) if llm is not None else None
         if handler is None:
-            if cfg.ai_provider == "kimi":
-                raise SystemExit(f"AI_PROVIDER=kimi: task {spec.task} is not implemented yet")
-            if cfg.ai_provider == "local":
-                log.warning("task_not_implemented_using_fixtures", task=spec.task)
             handler = MockTaskHandler(spec, failure_rate=cfg.mock_failure_rate)
         processors.append(Processor(handler, storage, "ihr-ai-worker", "ihr_ai",
                                     max_workers=cfg.kimi_max_concurrency))
@@ -67,6 +66,8 @@ def build_processors(cfg: AiWorkerConfig, storage) -> list[Processor]:
 def main() -> int:
     cfg = AiWorkerConfig.from_env()
     wlog.configure("ihr-ai-worker")
+    from ihr_worker_common.metrics import gauge
+    gauge("ihr_ai_token_budget_monthly", "KIMI_MONTHLY_TOKEN_BUDGET (for TokenBudget80/100)").set(cfg.kimi_monthly_token_budget)
     storage = S3Storage()
     processors = build_processors(cfg, storage)
     serve_in_background(build_app("ihr-ai-worker"), cfg.health_port)

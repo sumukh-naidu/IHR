@@ -1,17 +1,21 @@
-"""Evaluation harness skeleton (AI Specification v1.1 §13.2, §13.3, A-30).
+"""Evaluation harness (AI Specification v1.1 §13.2, §13.3, A-30, A-33).
 
 Usage:
-  python eval/run.py --task CV_PARSE --model-slot standard --prompt-version 1.0.0
-  python eval/run.py --task ALL --offline          # CI: offline parts only
+  python eval/run.py --task CV_PARSE --provider kimi                 # provider-backed (release gates count on Kimi)
+  python eval/run.py --task ALL --provider local                      # local llama-server stand-in (smoke only)
+  python eval/run.py --task ALL --offline                             # CI: offline parts only (redaction)
+  python eval/run.py --task STT --stt-model large-v3-turbo --stt-device cuda --stt-compute float16
 
-Sprint 1: gates are declared and reported; every gate whose metric is not implemented yet
-(or whose dataset is missing) is reported NOT_RUN. NOT_RUN does not fail --offline, but it
-does fail a release run (--release), because §13.3 says all gates must pass for release.
+A gate is NOT_RUN when its dataset or human-ratings file is missing (eval/datasets.py documents the layout).
+NOT_RUN does not fail a normal run but fails --release, because §13.3 says all gates must pass for release.
 """
 from __future__ import annotations
 
 import argparse
 import sys
+
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
+from datasets import MissingDataset  # noqa: E402
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -72,9 +76,7 @@ GATES: dict[str, list[Gate]] = {
 }
 LLM_TASKS = {"CV_PARSE", "CV_MATCH", "INTERVIEW_PLAN", "FOLLOWUP", "ANSWER_ASSESSMENT", "FINAL_REPORT"}
 
-# Metric implementations are registered here as each task lands (S2–S7):
-#   METRICS[(task, metric)] = callable(args) -> float
-METRICS: dict[tuple[str, str], Callable[[argparse.Namespace], float]] = {}
+from metrics_wiring import METRICS  # noqa: E402  (registers every gate's metric)
 
 
 def gates_for(task: str) -> list[tuple[str, Gate]]:
@@ -92,11 +94,16 @@ def evaluate(args: argparse.Namespace) -> tuple[list[tuple[str, Gate, str, float
             if args.offline and not gate.offline:
                 continue
             fn = METRICS.get((t, gate.metric))
-            if fn is None:
+            value = None
+            if fn is not None:
+                try:
+                    value = fn(args)
+                except MissingDataset as e:
+                    print(f"NOT_RUN  {t:18} {gate.metric}: missing {e}")
+            if value is None or value != value:      # None or NaN
                 rows.append((t, gate, "NOT_RUN", None))
                 ok = ok and not args.release
                 continue
-            value = fn(args)
             passed = gate.check(value)
             rows.append((t, gate, "PASS" if passed else "FAIL", value))
             ok = ok and passed
@@ -106,7 +113,9 @@ def evaluate(args: argparse.Namespace) -> tuple[list[tuple[str, Gate, str, float
 def write_report(args: argparse.Namespace, rows, ok: bool) -> Path:
     path = ROOT / "reports" / f"{date.today():%Y-%m-%d}-{args.task}-{args.prompt_version}.md"
     lines = [f"# Evaluation report: {args.task}, prompt {args.prompt_version}, slot {args.model_slot}", "",
-             f"Mode: {'offline' if args.offline else 'provider'}. Overall: {'PASS' if ok else 'FAIL'}.", "",
+             f"Mode: {'offline' if args.offline else 'provider ' + args.provider}. Overall: {'PASS' if ok else 'FAIL'}.",
+             "" if args.provider == "kimi" or args.offline else
+             "**Not a release result: gates count only on Kimi (§13.3).**", "",
              "| Task | Area | Metric | Threshold | Value | Result |", "|---|---|---|---|---|---|"]
     for task, g, result, value in rows:
         lines.append(f"| {task} | {g.area} | {g.metric} | {g.threshold} | "
@@ -123,7 +132,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--offline", action="store_true", help="only gates computed without a provider (CI)")
     ap.add_argument("--release", action="store_true", help="NOT_RUN gates fail the run (§13.3)")
     ap.add_argument("--no-report", action="store_true")
+    ap.add_argument("--provider", default="mock", choices=("kimi", "local", "mock"),
+                    help="model provider for provider-backed gates (release gates count only on kimi)")
+    ap.add_argument("--dataset-root", default=None, help="defaults to eval/datasets")
+    ap.add_argument("--stt-model", default="large-v3-turbo")
+    ap.add_argument("--stt-device", default="cuda")
+    ap.add_argument("--stt-compute", default="float16")
     args = ap.parse_args(argv)
+    if args.release and args.provider != "kimi":
+        ap.error("--release gates count only on Kimi (--provider kimi)")
     rows, ok = evaluate(args)
     if not args.no_report and not args.offline:
         print(f"report: {write_report(args, rows, ok)}")

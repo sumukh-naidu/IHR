@@ -10,6 +10,7 @@ import time
 from datetime import timedelta
 
 from ihr_worker_common import contracts
+from ihr_worker_common.errors import ProcessingError
 from ihr_worker_common.events import utc_now
 from ihr_worker_common.log import get_logger
 from ihr_worker_common.metrics import counter
@@ -22,7 +23,8 @@ from ..policy import questions as qpolicy
 from ..privacy import injection
 from ..prompts import PromptRegistry
 from ..tasks import TASKS
-from .common import capture_calls, run_meta
+from . import metrics
+from .common import capture_calls, run_meta, capture_failure
 from .interview_plan import SIMILARITY_LIMIT, similarity
 from .transcripts import load_segments, name_tokens, segment_lines
 
@@ -60,12 +62,18 @@ class FollowupHandler:
         self.llm = llm
         self.prompt = prompts.get(self.spec.prompt_id)
         self.capture = debug_capture_enabled
-        self._rejected = counter("ihr_ai_followup_policy_rejected_total", "Follow-ups rejected by policy", ("rule",))
 
     def output_location(self, payload: dict) -> None:
         return None   # inline output (A.5)
 
     def handle(self, ctx: JobContext) -> HandlerResult:
+        try:
+            return self._handle(ctx)
+        except ProcessingError as e:
+            capture_failure(self, ctx, e)
+            raise
+
+    def _handle(self, ctx: JobContext) -> HandlerResult:
         t0 = time.monotonic()
         p = ctx.payload
         q = p["question"]
@@ -88,7 +96,7 @@ class FollowupHandler:
         problems = check_decision(decision, q, name_tokens(p.get("redactionHints")))
         if problems:
             for rule in problems:
-                self._rejected.labels(rule).inc()
+                metrics.policy_rejection(self.task, rule)
             log.info("followup_rejected", job_id=ctx.job_id, rules=problems)
             decision = dict(NEXT)
         elif decision["decision"] == "NEXT_QUESTION":

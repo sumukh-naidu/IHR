@@ -48,7 +48,7 @@ Same adapter as Kimi (JSON mode, retries, breaker). Eval gate results only count
 
 Both need `KAFKA_BOOTSTRAP_SERVERS` and the `S3_*` variables (§3.3).
 
-## Status (Sprint 5)
+## Status (Sprint 7)
 
 Done: contracts, fixtures, worker framework, Kimi adapter (retries, circuit breaker, rate
 limit, error mapping, repair once), mock mode for every task, prompt loader (A-11), debug
@@ -81,4 +81,15 @@ failure → NEXT_QUESTION/NOT_USEFUL) and ANSWER_ASSESSMENT (`pipelines/answer_a
 segment-verified quotes ±1, null/reason rules, language policy, WARMUP/CLOSING unscored, low transcript quality →
 LOW confidence, no speech → code-built output, injection flag).
 Open S5 items: answers-160 / follow-up human ratings (need datasets), FOLLOWUP p95 ≤ 6 s (needs Kimi).
-Next, per §15: S6 FINAL_REPORT.
+
+Sprint 6 built: FINAL_REPORT (`pipelines/final_report.py`: no-numbers regex, evidence refs T# → turn/segment,
+integrity-word check on limitations, language policy, computedScores attached unchanged). All six AI tasks now
+run for real with `AI_PROVIDER=kimi|local`. A local end-to-end run (speech → STT → assessment → report) passes.
+Open S6 items: first full evaluation run on Kimi with the datasets (§13.3 gates).
+
+Sprint 7–8 built: §12.1 metrics aligned + `deploy/monitoring/ai-alerts.rules.yml` (all §12.2 alerts) +
+`grafana-ihr-ai.json`; evaluation harness computing every §13.3 gate from the datasets (`eval/run.py`,
+`metrics.py`, `runners.py`, `datasets.py`); counterfactual bias suite (`eval/bias.py`, A-33); sentinel PII leak
+tests; load test `tools/loadtest.py` (30 concurrent interviews: PASS at design load); runbooks (`docs/runbooks/`);
+prompt immutability + freeze (`tools/prompt_lock.py`, CI).
+Open: datasets (A-31) and the Kimi key for the gate runs; HR calibration (UAT); prompt freeze after sign-off.
