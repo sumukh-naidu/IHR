@@ -11,10 +11,14 @@ dependencies = [
   "phonenumbers>=8.13",
   "pyyaml>=6",
   "uvicorn>=0.29",
+  "pdfplumber>=0.11",
+  "pypdfium2>=4",
+  "pytesseract>=0.3.10",
+  "python-docx>=1.1",
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=8", "respx>=0.21"]
+test = ["pytest>=8", "respx>=0.21", "hypothesis>=6", "reportlab>=4", "pypdf>=4"]
 
 [tool.uv.sources]
 ihr-worker-common = { path = "../../libs/py-worker-common", editable = true }

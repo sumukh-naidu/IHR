@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable
 
@@ -37,6 +37,7 @@ class StructuredResult:
     value: dict
     results: list[LlmResult]
     repaired: bool
+    requests: list[list[dict]] = field(default_factory=list)   # messages sent per call (A-12 capture)
 
     @property
     def provider_attempts(self) -> int:
@@ -92,7 +93,7 @@ def call_structured(client: LlmClient, *, task: str, params: TaskParams, message
     value, check = _parse(first, validate)
     if value is not None and check.kind is None:
         validations.labels(task, "valid").inc()
-        return StructuredResult(value, [first], repaired=False)
+        return StructuredResult(value, [first], repaired=False, requests=[messages])
     if not allow_repair:
         validations.labels(task, "invalid").inc()
         raise ProcessingError(_FINAL_CODE[check.kind or "schema"], "Model output failed validation.")
@@ -109,6 +110,6 @@ def call_structured(client: LlmClient, *, task: str, params: TaskParams, message
     value, check2 = _parse(second, validate)
     if value is not None and check2.kind is None:
         validations.labels(task, "repaired").inc()
-        return StructuredResult(value, [first, second], repaired=True)
+        return StructuredResult(value, [first, second], repaired=True, requests=[messages, repair_msgs])
     validations.labels(task, "invalid").inc()
     raise ProcessingError(_FINAL_CODE[check2.kind or "schema"], "Model output failed validation after one repair.")

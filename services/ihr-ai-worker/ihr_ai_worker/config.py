@@ -20,6 +20,10 @@ class AiWorkerConfig:
     prompts_active_file: str
     mock_failure_rate: float
     health_port: int
+    clamav_host: str = "ihr-clamav"
+    clamav_port: int = 3310
+    ocr_max_pages: int = 10
+    libreoffice_bin: str = "/usr/bin/soffice"
 
     @property
     def consumer_group(self) -> str:
@@ -61,4 +65,8 @@ class AiWorkerConfig:
             prompts_active_file=os.environ.get("PROMPTS_ACTIVE_FILE", "/app/prompts/active.yaml"),
             mock_failure_rate=float(os.environ.get("MOCK_FAILURE_RATE", "0")),
             health_port=int(os.environ.get("HEALTH_PORT", "8080")),
+            clamav_host=os.environ.get("CLAMAV_HOST", "ihr-clamav"),
+            clamav_port=int(os.environ.get("CLAMAV_PORT", "3310")),
+            ocr_max_pages=int(os.environ.get("OCR_MAX_PAGES", "10")),
+            libreoffice_bin=os.environ.get("LIBREOFFICE_BIN", "/usr/bin/soffice"),
         )

@@ -48,10 +48,18 @@ Same adapter as Kimi (JSON mode, retries, breaker). Eval gate results only count
 
 Both need `KAFKA_BOOTSTRAP_SERVERS` and the `S3_*` variables (§3.3).
 
-## Status (Sprint 1)
+## Status (Sprint 2)
 
 Done: contracts, fixtures, worker framework, Kimi adapter (retries, circuit breaker, rate
 limit, error mapping, repair once), mock mode for every task, prompt loader (A-11), debug
 capture (A-12), contracts-check CI, eval harness skeleton, `tools/kimi_list_models.py` (S-11).
 Open S1 exit items: mocks in the Platform compose stack, Kimi smoke call (needs key).
-Next, per §15: S2 text extraction, redaction and CV_PARSE.
+
+Sprint 2 (CV_PARSE) built: ClamAV INSTREAM, magic-byte sniffing, pdfplumber + OCR fallback
+(pypdfium2 + Tesseract), python-docx, LibreOffice DOC conversion, normalisation and §6.2 warnings,
+local identity (A-17), the 10-step redaction (§5.2), injection escaping/detection incl. hidden
+text (§10), the shared evidence verifier (A-23), CV_PARSE validation and enrichment (A-18, A-19).
+Code: `ihr_ai_worker/{extraction,privacy,enrich,pipelines}/`, `evidence.py`.
+`AI_PROVIDER=kimi|local` runs the real CV_PARSE; other tasks are still fixtures.
+Open S2 items: Testcontainers integration (ClamAV EICAR, SeaweedFS, Kafka), eval on cv-48 (needs dataset).
+Next, per §15: S3 CV_MATCH and STT.

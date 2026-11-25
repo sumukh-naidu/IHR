@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CV Parse Tester</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --ink:#1b1f24; --muted:#5f6b7a; --line:#e3e6eb;
+  --accent:#2f5bea; --accent-ink:#fff; --ok:#1d7a46; --ok-bg:#e6f4ec; --warn:#8a5a00; --warn-bg:#fdf3dc;
+  --bad:#b42318; --bad-bg:#fdeceb; --code:#f1f3f6; --chip:#eef1f6;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111418; --panel:#181c21; --ink:#e6e9ee; --muted:#9aa5b4; --line:#2a3038;
+  --accent:#6d8dff; --accent-ink:#0d1117; --ok:#5fd394; --ok-bg:#14301f; --warn:#f0c060; --warn-bg:#352a10;
+  --bad:#ff8a80; --bad-bg:#3a1714; --code:#1f242b; --chip:#232a33;}}
+:root[data-theme="dark"]{
+  --bg:#111418; --panel:#181c21; --ink:#e6e9ee; --muted:#9aa5b4; --line:#2a3038;
+  --accent:#6d8dff; --accent-ink:#0d1117; --ok:#5fd394; --ok-bg:#14301f; --warn:#f0c060; --warn-bg:#352a10;
+  --bad:#ff8a80; --bad-bg:#3a1714; --code:#1f242b; --chip:#232a33;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:20px;margin:0} h2{font-size:15px;margin:0 0 10px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;cursor:pointer}
+.drop.over{border-color:var(--accent)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-top:14px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input[type=text],select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:220px}
+button{font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:9px 18px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.banner{border-radius:8px;padding:10px 14px;font-weight:600;margin-bottom:12px}
+.banner.ok{background:var(--ok-bg);color:var(--ok)} .banner.bad{background:var(--bad-bg);color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--chip);border-radius:999px;padding:2px 10px;font-size:12.5px}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;word-break:break-word}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tab{background:none;color:var(--muted);border-radius:0;padding:8px 12px;border-bottom:2px solid transparent;font-weight:500;white-space:nowrap}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+pre{background:var(--code);border-radius:8px;padding:12px;overflow:auto;font:12.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;margin:0;max-height:70vh}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+.tablewrap{overflow-x:auto}
+.role{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:14px}
+.role b{display:block} ul{margin:6px 0 0;padding-left:18px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-2px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>CV Parse Tester</h1>
+      <div class="muted small">Runs the real CV_PARSE pipeline locally. ClamAV is skipped; OCR needs Tesseract.</div>
+    </div>
+    <span class="status" id="health"><span class="dot"></span><span>checking model…</span></span>
+  </header>
+
+  <section class="panel">
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept=".pdf,.docx,.doc" hidden>
+      <div id="dropText"><b>Choose a CV</b> or drop it here<br><span class="muted small">.pdf, .docx or .doc, up to 10 MB</span></div>
+    </div>
+    <div class="row">
+      <label>Known candidate name (redaction hint, optional)
+        <input type="text" id="name" placeholder="e.g. Asha Verma">
+      </label>
+      <label>Model
+        <select id="provider">
+          <option value="local">Local Qwen (llama-server)</option>
+          <option value="mock">Mock (fixture response)</option>
+        </select>
+      </label>
+      <button id="run" disabled>Run CV_PARSE</button>
+      <span id="busy" class="muted small hidden"><span class="spinner"></span> Parsing… local model takes ~30–60 s</span>
+    </div>
+  </section>
+
+  <section id="results" class="hidden">
+    <div id="banner" class="banner"></div>
+    <div class="panel">
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-t="summary">Summary</button>
+        <button class="tab" data-t="profile">Profile</button>
+        <button class="tab" data-t="text">Text sent to model</button>
+        <button class="tab" data-t="calls">Model calls</button>
+        <button class="tab" data-t="raw">Raw JSON</button>
+      </div>
+      <div id="t-summary"></div>
+      <div id="t-profile" class="hidden"></div>
+      <div id="t-text" class="hidden"><pre id="text"></pre></div>
+      <div id="t-calls" class="hidden"></div>
+      <div id="t-raw" class="hidden"><pre id="raw"></pre></div>
+    </div>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "—").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let file = null;
+
+async function health(){
+  try{
+    const h = await (await fetch("/api/health")).json();
+    $("health").innerHTML = `<span class="dot ${h.localModel?"ok":"bad"}"></span><span>${h.localModel?"Local model ready":"Local model not reachable"} · ${esc(h.model)}</span>`;
+  }catch{ $("health").innerHTML = `<span class="dot bad"></span><span>UI server unreachable</span>`; }
+}
+health(); setInterval(health, 15000);
+
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+$("file").onchange = e => pick(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files[0]); };
+function pick(f){
+  if(!f) return; file = f;
+  $("dropText").innerHTML = `<b>${esc(f.name)}</b><br><span class="muted small">${(f.size/1024).toFixed(1)} KB · click to change</span>`;
+  $("run").disabled = false;
+}
+
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
+  ["summary","profile","text","calls","raw"].forEach(t => $("t-"+t).classList.toggle("hidden", t !== b.dataset.t));
+});
+
+$("run").onclick = async () => {
+  if(!file) return;
+  const ext = file.name.split(".").pop();
+  $("run").disabled = true; $("busy").classList.remove("hidden");
+  try{
+    const q = new URLSearchParams({ext, name: $("name").value, provider: $("provider").value});
+    const r = await fetch("/api/parse?" + q, {method:"POST", body: await file.arrayBuffer()});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    render(d);
+  }catch(e){
+    $("results").classList.remove("hidden");
+    $("banner").className = "banner bad"; $("banner").textContent = "Error: " + e.message;
+  }finally{ $("run").disabled = false; $("busy").classList.add("hidden"); }
+};
+
+function kv(obj){ return `<dl class="kv">${Object.entries(obj).map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`; }
+function chips(list, cls=""){ return list && list.length ? `<div class="chips">${list.map(w => `<span class="chip ${cls}">${esc(w)}</span>`).join("")}</div>` : `<span class="muted">none</span>`; }
+function months(m){ return m == null ? "—" : `${m} months (${(m/12).toFixed(1)} yrs)`; }
+
+function render(d){
+  $("results").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed");
+  $("banner").className = "banner " + (ok ? "ok" : "bad");
+  const fname = file ? `${file.name} · ` : "";
+  $("banner").textContent = fname + (ok
+    ? `Completed in ${d.seconds}s — ${p.run.validationStatus}${p.run.repairAttempted ? " (after one repair)" : ""}`
+    : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`);
+  $("raw").textContent = JSON.stringify(d, null, 2);
+  $("text").textContent = d.redactedText || "(no text — job failed before the model call)";
+
+  const calls = Object.entries(d.modelCalls || {});
+  $("t-calls").innerHTML = calls.length
+    ? calls.map(([k,v]) => `<h2>${esc(k.split("/").pop())}</h2><pre>${esc(JSON.stringify(v, null, 2))}</pre><br>`).join("")
+    : `<span class="muted">No model call was made.</span>`;
+
+  if(!ok){ $("t-summary").innerHTML = kv({errorCode:p.errorCode, errorClass:p.errorClass, retryable:p.retryable, message:p.message}); $("t-profile").innerHTML = ""; return; }
+
+  const pr = d.profile, ex = pr.extraction, id = p.identity, run = p.run;
+  const idv = f => id[f] ? `${id[f].value} (${id[f].source}, ${id[f].confidence})` : "not found";
+  $("t-summary").innerHTML = `
+    <div class="grid">
+      <div><h2>Warnings</h2>${chips(ex.warnings, "warn")}
+        <h2 style="margin-top:16px">Missing / ambiguous</h2>${chips(pr.missingOrAmbiguousFields, "warn")}</div>
+      <div><h2>Identity (local only, never sent)</h2>${kv({name:idv("name"), email:idv("email"), phone:idv("phone")})}</div>
+      <div><h2>Redactions</h2>${kv(ex.redactionCounts)}</div>
+      <div><h2>Derived (code)</h2>${kv({"total experience":months(pr.derived.totalExperienceMonths), "latest role":months(pr.derived.mostRecentRoleMonths), "canonical skills":pr.derived.skillsCanonical.length})}</div>
+      <div><h2>Document</h2>${kv({pages:ex.pageCount, "OCR pages":ex.ocrPages, "text chars":ex.textChars, truncated:ex.truncated})}</div>
+      <div><h2>Model run</h2>${kv({provider:run.provider, model:run.model, latency:`${(run.latencyMs/1000).toFixed(1)} s`, "tokens in/out":`${run.inputTokens ?? "—"} / ${run.outputTokens ?? "—"}`, attempts:run.providerAttempts, prompt:`${run.promptId} v${run.promptVersion}`})}</div>
+    </div>`;
+
+  const roles = pr.employmentHistory.map(e => `
+    <div class="role"><b>${esc(e.title)} · ${esc(e.employer)}</b>
+      <span class="muted small">${esc(e.startDate)} → ${esc(e.endDate)} · ${esc(e.datePrecision)} · ${esc(e.employmentType)}</span>
+      ${e.highlights.length ? `<ul>${e.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}</div>`).join("") || `<span class="muted">none</span>`;
+  const skills = pr.skills.map(s => `<tr><td>${esc(s.name)}</td><td class="muted">${esc(s.sourceSection)}</td><td>“${esc(s.quote)}”</td></tr>`).join("");
+  const canon = pr.derived.skillsCanonical.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.originalNames.join(", "))}</td></tr>`).join("");
+  const edu = pr.education.map(e => `<tr><td>${esc(e.qualification)}</td><td>${esc(e.fieldOfStudy)}</td><td>${esc(e.institution)}</td><td>${esc(e.startYear)}–${esc(e.endYear)}</td></tr>`).join("");
+  $("t-profile").innerHTML = `
+    <h2>Headline</h2><p>${esc(pr.headline)}</p>
+    ${kv({"current title":pr.currentTitle, "current employer":pr.currentEmployer, location:pr.location})}
+    <h2 style="margin-top:18px">Employment</h2>${roles}
+    <h2>Skills (verified quotes)</h2><div class="tablewrap"><table><tr><th>Skill</th><th>Section</th><th>Quote</th></tr>${skills}</table></div>
+    <h2 style="margin-top:18px">Canonical skills (code)</h2><div class="tablewrap"><table><tr><th>Canonical</th><th>As written</th></tr>${canon}</table></div>
+    <h2 style="margin-top:18px">Education</h2><div class="tablewrap"><table><tr><th>Qualification</th><th>Field</th><th>Institution</th><th>Years</th></tr>${edu}</table></div>
+    <h2 style="margin-top:18px">Certifications / projects</h2>${chips(pr.certifications.map(c => c.name).concat(pr.projects.map(x => x.name)))}`;
+}
+</script>
+</body>
+</html>
