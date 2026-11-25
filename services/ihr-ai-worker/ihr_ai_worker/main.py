@@ -16,8 +16,11 @@ from .config import AiWorkerConfig
 from .extraction.clamav import ClamAvScanner
 from .llm.kimi import build_llm_client
 from .mock_handlers import MockTaskHandler
+from .pipelines.answer_assessment import AnswerAssessmentHandler
 from .pipelines.cv_match import CvMatchHandler
+from .pipelines.followup import FollowupHandler
 from .pipelines.cv_parse import CvParseHandler
+from .pipelines.interview_plan import InterviewPlanHandler
 from .prompts import load_registry
 from .tasks import tasks_for_role
 
@@ -33,6 +36,12 @@ def real_handler(spec, cfg: AiWorkerConfig, llm, prompts):
                               debug_capture_enabled=cfg.ai_debug_capture)
     if spec.task == "CV_MATCH":
         return CvMatchHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
+    if spec.task == "INTERVIEW_PLAN":
+        return InterviewPlanHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
+    if spec.task == "FOLLOWUP":
+        return FollowupHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
+    if spec.task == "ANSWER_ASSESSMENT":
+        return AnswerAssessmentHandler(llm, prompts, debug_capture_enabled=cfg.ai_debug_capture)
     return None
 
 

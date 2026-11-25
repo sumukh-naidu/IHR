@@ -12,6 +12,7 @@ from ihr_worker_common.storage import S3Storage
 
 from .stt import TranscriptionHandler, WhisperConfig, WhisperEngine
 from .stt_mock import MockTranscriptionHandler
+from .tts import SynthesisHandler, build_providers
 from .tts_mock import MockSynthesisHandler
 
 
@@ -29,9 +30,10 @@ def build_handler(role: str):
         ENGINE = WhisperEngine(WhisperConfig.from_env())
         return TranscriptionHandler(ENGINE)
     if role == "tts":
-        if os.environ.get("TTS_PROVIDER_PRIMARY", "mock") != "mock":
-            raise SystemExit("Azure/Polly TTS is delivered in Sprint 4; use TTS_PROVIDER_PRIMARY=mock")
-        return MockSynthesisHandler()
+        primary = os.environ.get("TTS_PROVIDER_PRIMARY", "mock")
+        if primary == "mock":
+            return MockSynthesisHandler()
+        return SynthesisHandler(build_providers(primary, os.environ.get("TTS_PROVIDER_SECONDARY", "polly")))
     raise SystemExit("WORKER_ROLE must be stt or tts")
 
 

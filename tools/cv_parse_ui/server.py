@@ -34,6 +34,12 @@ from ihr_ai_worker.llm.kimi import KimiClient  # noqa: E402
 from ihr_ai_worker.llm.mock import MockLlmClient  # noqa: E402
 from ihr_ai_worker.pipelines.cv_match import CvMatchHandler  # noqa: E402
 from ihr_ai_worker.pipelines.cv_parse import CvParseHandler  # noqa: E402
+from ihr_ai_worker.pipelines.interview_plan import InterviewPlanHandler  # noqa: E402
+from ihr_ai_worker.pipelines import followup as followup_mod  # noqa: E402
+from ihr_ai_worker.pipelines.answer_assessment import AnswerAssessmentHandler  # noqa: E402
+from ihr_ai_worker.pipelines.followup import FollowupHandler  # noqa: E402
+from speech.tts import SynthesisHandler, build_providers  # noqa: E402
+from speech.tts_mock import MockSynthesisHandler  # noqa: E402
 from speech.stt import TranscriptionHandler, WhisperConfig, WhisperEngine  # noqa: E402
 from speech.stt_mock import MockTranscriptionHandler  # noqa: E402
 from ihr_ai_worker.prompts import load_registry  # noqa: E402
@@ -41,12 +47,19 @@ from ihr_ai_worker.prompts import load_registry  # noqa: E402
 LOCAL_URL = os.environ.get("LOCAL_LLM_BASE_URL", "http://127.0.0.1:8081/v1")
 LOCAL_MODEL = os.environ.get("LOCAL_LLM_MODEL", "qwen3.6-35b-a3b")
 # local inference is slower than Kimi; widen only the per-call timeout for this tool
-for _t in ("CV_PARSE", "CV_MATCH"):
+for _t in ("CV_PARSE", "CV_MATCH", "INTERVIEW_PLAN", "FOLLOWUP", "ANSWER_ASSESSMENT"):
     base.TASK_PARAMS[_t] = dataclasses.replace(base.TASK_PARAMS[_t], timeout_s=600)
 
 REGISTRY = load_registry(ROOT / "docs/prompts/active.yaml")
 REQUEST = json.loads((ROOT / "contracts/fixtures/ai/cv_parse/request.json").read_text())
 MATCH_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/cv_match/request.json").read_text())
+PLAN_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/interview_plan/request.json").read_text())
+TTS_REQUEST = json.loads((ROOT / "contracts/fixtures/speech/synthesis/request.json").read_text())
+TTS_STORAGE = InMemoryStorage()      # shared so repeated texts show the cache hit (§11.2 step 1)
+_TTS_REAL: SynthesisHandler | None = None
+FU_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/followup_decision/request.json").read_text())
+AA_REQUEST = json.loads((ROOT / "contracts/fixtures/ai/answer_assessment/request.json").read_text())
+TRANSCRIPTS: "OrderedDict[str, dict]" = OrderedDict()   # transcriptId -> storage, ref, quality (per browser tab)
 STT_REQUEST = json.loads((ROOT / "contracts/fixtures/speech/transcription/request.json").read_text())
 WHISPER_MODEL = os.environ.get("UI_WHISPER_MODEL", "small.en")
 SOFFICE = os.environ.get("LIBREOFFICE_BIN", "/Applications/LibreOffice.app/Contents/MacOS/soffice")
@@ -181,7 +194,140 @@ async def transcribe(request: Request, hints: str = "", provider: str = "whisper
     result = {"topic": out.topic, "seconds": round(time.monotonic() - t0, 1), "modelLoadSeconds": load_s,
               "payload": payload}
     if out.topic.endswith(".completed"):
-        result["transcript"] = json.loads(storage.get_bytes(payload["output"]["bucket"], payload["output"]["key"]))
+        tr = json.loads(storage.get_bytes(payload["output"]["bucket"], payload["output"]["key"]))
+        result["transcript"] = tr
+        tid = uuid.uuid4().hex
+        TRANSCRIPTS[tid] = {"storage": storage, "ref": payload["output"],
+                            "quality": {"avgConfidence": tr["avgConfidence"], "speechDetected": tr["speechDetected"],
+                                        "qualityFlags": tr["qualityFlags"]}}
+        while len(TRANSCRIPTS) > MAX_PARSES:
+            TRANSCRIPTS.popitem(last=False)
+        result["transcriptId"] = tid
+    return JSONResponse(result)
+
+
+@app.post("/api/evaluate")
+async def evaluate(request: Request) -> JSONResponse:
+    """Runs FOLLOWUP and/or ANSWER_ASSESSMENT on a transcript produced in the Speech-to-text tab."""
+    import anyio
+    body = await request.json()
+    t = TRANSCRIPTS.get(body.get("transcriptId") or "")
+    if not t:
+        return JSONResponse({"error": "Transcribe an answer in step 3 first (or again: the server was restarted)."}, 400)
+    q = body["question"]
+    keep = ("code", "name", "description", "anchors", "weight", "mandatory")       # assessment request fields
+    comps = [{k: c[k] for k in keep} for c in PLAN_REQUEST["payload"]["competencies"] if c["code"] in q["competencyCodes"]]
+    hints = {"fullName": body.get("candidateName") or None, "email": None, "phone": None}
+    llm = MockLlmClient() if body.get("provider") == "mock" else LOCAL
+    if body.get("provider") != "mock":
+        followup_mod.DEADLINE_S = int(body.get("followupDeadline", 600))   # local stand-in is slower than Kimi
+    storage, out = t["storage"], {}
+    if body.get("runFollowup", True) and body.get("turnKind", "MAIN") in ("MAIN",):
+        env = json.loads(json.dumps(FU_REQUEST))
+        env["eventId"], env["payload"]["jobId"] = str(uuid.uuid4()), str(uuid.uuid4())
+        p = env["payload"]
+        p.update(transcript=t["ref"], question=q, redactionHints=hints)
+        proc = Processor(FollowupHandler(llm, REGISTRY), storage, "ihr-ai-worker", "ui")
+        t0 = time.monotonic()
+        o, pay = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+        out["followup"] = {"topic": o.topic, "seconds": round(time.monotonic() - t0, 1), "payload": pay,
+                           "calls": _calls(storage, p["jobId"])}
+    if body.get("runAssessment", True):
+        env = json.loads(json.dumps(AA_REQUEST))
+        env["eventId"], env["payload"]["jobId"] = str(uuid.uuid4()), str(uuid.uuid4())
+        p = env["payload"]
+        p.update(transcript=t["ref"], question=q, competencies=comps, turnKind=body.get("turnKind", "MAIN"),
+                 transcriptQuality=t["quality"], redactionHints=hints, priorContext=[])
+        proc = Processor(AnswerAssessmentHandler(llm, REGISTRY), storage, "ihr-ai-worker", "ui")
+        t0 = time.monotonic()
+        o, pay = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+        res = {"topic": o.topic, "seconds": round(time.monotonic() - t0, 1), "payload": pay,
+               "calls": _calls(storage, p["jobId"])}
+        if o.topic.endswith(".completed"):
+            res["assessment"] = json.loads(storage.get_bytes(pay["output"]["bucket"], pay["output"]["key"]))
+        out["assessment"] = res
+    return JSONResponse(out)
+
+
+def _calls(storage, job_id: str) -> dict:
+    return {k: json.loads(v) for (_, k), (v, _) in storage.objects.items() if k.startswith("ai-runs/") and job_id in k}
+
+
+@app.get("/api/plan/defaults")
+def plan_defaults() -> dict:
+    return {"competencies": PLAN_REQUEST["payload"]["competencies"]}
+
+
+@app.post("/api/plan")
+async def plan(request: Request) -> JSONResponse:
+    import anyio
+    body = await request.json()
+    env = json.loads(json.dumps(PLAN_REQUEST))
+    p = env["payload"]
+    p["job"] = body["job"]
+    p["mainQuestionCount"] = int(body.get("mainQuestionCount", 6))
+    p["maxAnswerSeconds"] = int(body.get("maxAnswerSeconds", 180))
+    p["competencies"] = body.get("competencies") or p["competencies"]
+    storage, cv_file = InMemoryStorage(), None
+    parsed = PARSES.get(body.get("parseId") or "") if body.get("useCv", True) else None
+    if parsed:
+        storage, cv_file = parsed["storage"], parsed.get("file")
+        p["cvProfile"] = parsed["output"]["cvProfile"]
+    else:
+        p["cvProfile"] = None
+    try:
+        from ihr_worker_common import contracts
+        contracts.validate_payload("ihr.interview.plan.requested", p)
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"error": f"Request is not valid: {e}"}, 400)
+    llm = MockLlmClient() if body.get("provider") == "mock" else LOCAL
+    proc = Processor(InterviewPlanHandler(llm, REGISTRY), storage, "ihr-ai-worker", "ui")
+    t0 = time.monotonic()
+    out, payload = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+    result = {"topic": out.topic, "seconds": round(time.monotonic() - t0, 1), "payload": payload, "cvFile": cv_file}
+    if out.topic.endswith(".completed"):
+        result["plan"] = json.loads(storage.get_bytes(payload["output"]["bucket"], payload["output"]["key"]))
+    result["modelCalls"] = {k: json.loads(v) for (_, k), (v, _) in storage.objects.items()
+                            if k.startswith("ai-runs/") and p["jobId"] in k}
+    return JSONResponse(result)
+
+
+def _tts_real() -> SynthesisHandler:
+    global _TTS_REAL
+    if _TTS_REAL is None:
+        _TTS_REAL = SynthesisHandler(build_providers("azure", "polly"))
+    return _TTS_REAL
+
+
+@app.post("/api/tts")
+async def tts(request: Request) -> JSONResponse:
+    import anyio
+    import base64
+    body = await request.json()
+    text = body.get("text", "")
+    provider = body.get("provider", "mock")
+    if provider == "real" and not (os.environ.get("AZURE_SPEECH_KEY") or os.environ.get("AWS_ACCESS_KEY_ID")):
+        return JSONResponse({"error": "No Azure or AWS credentials set. Start the server with AZURE_SPEECH_KEY "
+                                      "and/or AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, or use the mock."}, 400)
+    env = json.loads(json.dumps(TTS_REQUEST))
+    p = env["payload"]
+    p["text"] = text
+    p["jobId"] = str(uuid.uuid4())
+    p["purpose"] = body.get("purpose", "QUESTION")
+    version = os.environ.get("TTS_PROFILE_VERSION", "1")
+    # cacheKey is computed by core (A.6); same inputs -> same key -> cache hit
+    p["cacheKey"] = hashlib.sha256(f"{provider}|{p['voiceProfileKey']}|{version}|{' '.join(text.split())}".encode()).hexdigest()
+    env["eventId"] = str(uuid.uuid4())
+    handler = MockSynthesisHandler() if provider == "mock" else _tts_real()
+    proc = Processor(handler, TTS_STORAGE, "ihr-speech-service", "ui")
+    t0 = time.monotonic()
+    out, payload = await anyio.to_thread.run_sync(lambda: _event(proc, env))
+    result = {"topic": out.topic, "seconds": round(time.monotonic() - t0, 2), "payload": payload}
+    if out.topic.endswith(".completed"):
+        ref = payload["output"]
+        result["audioB64"] = base64.b64encode(TTS_STORAGE.get_bytes(ref["bucket"], ref["key"])).decode()
+    from speech.tts import normalise_for_speech
+    result["spokenText"] = normalise_for_speech(text)      # what the voice is asked to say (lexicon applied)
     return JSONResponse(result)
 
 

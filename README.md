@@ -48,7 +48,7 @@ Same adapter as Kimi (JSON mode, retries, breaker). Eval gate results only count
 
 Both need `KAFKA_BOOTSTRAP_SERVERS` and the `S3_*` variables (§3.3).
 
-## Status (Sprint 3)
+## Status (Sprint 5)
 
 Done: contracts, fixtures, worker framework, Kimi adapter (retries, circuit breaker, rate
 limit, error mapping, repair once), mock mode for every task, prompt loader (A-11), debug
@@ -69,4 +69,16 @@ question policy A-21 with `policy/questions.py`, language policy A-22, `docs/pro
 segment post-processing, A-27 flags, warm-up before readiness, CUDA OOM reload, `Dockerfile.stt`,
 `tools/stt_benchmark.py`). `STT_PROVIDER=faster-whisper` runs the real model.
 Open S3 items: L4 GPU benchmark (needs GPU + audio-40), CV_MATCH eval on cv-48 rubrics (needs dataset).
-Next, per §15: S4 TTS and INTERVIEW_PLAN.
+
+Sprint 4 built: INTERVIEW_PLAN (`pipelines/interview_plan.py`, `plan_allocation.py`: A-25 allocation,
+per-question policy / similarity < 0.85 / anchor checks, fallback-bank replacement, all-fallback plan instead of
+.failed) and TTS (`speech/tts.py`: cache, `speech/lexicon.yaml`, SSML, Azure primary + Polly failover with
+per-provider breakers, audio validation, PII guard). `TTS_PROVIDER_PRIMARY=azure TTS_PROVIDER_SECONDARY=polly`.
+Open S4 items: live Azure/Polly calls (need credentials), plans-20 human ratings (needs dataset).
+
+Sprint 5 built: FOLLOWUP (`pipelines/followup.py`: realtime, 12 s, ≤ 1 retry, no repair, policy/consistency
+failure → NEXT_QUESTION/NOT_USEFUL) and ANSWER_ASSESSMENT (`pipelines/answer_assessment.py`: exact competency set,
+segment-verified quotes ±1, null/reason rules, language policy, WARMUP/CLOSING unscored, low transcript quality →
+LOW confidence, no speech → code-built output, injection flag).
+Open S5 items: answers-160 / follow-up human ratings (need datasets), FOLLOWUP p95 ≤ 6 s (needs Kimi).
+Next, per §15: S6 FINAL_REPORT.

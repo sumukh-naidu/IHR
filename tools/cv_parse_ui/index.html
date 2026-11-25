@@ -84,6 +84,9 @@ td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
     <button class="step on" data-p="parse">1 · CV Parse</button>
     <button class="step" data-p="match">2 · CV Match</button>
     <button class="step" data-p="stt">3 · Speech to text</button>
+    <button class="step" data-p="plan">4 · Interview plan</button>
+    <button class="step" data-p="tts">5 · Text to speech</button>
+    <button class="step" data-p="eval">6 · Answer evaluation</button>
   </nav>
 
   <div id="page-parse">
@@ -193,6 +196,107 @@ td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
       <div class="panel" id="sttBody"></div>
     </section>
   </div>
+
+  <div id="page-plan" class="hidden">
+    <section class="panel">
+      <label class="small" style="flex-direction:row;align-items:center;gap:8px;margin-bottom:12px">
+        <input type="checkbox" id="useCv" checked> <span id="planCv"></span>
+      </label>
+      <div class="row" style="margin-top:0">
+        <label style="flex:1">Job title <input type="text" id="pJobTitle" value="Python Backend Engineer"></label>
+        <label>Questions (4–10) <input type="number" id="pN" value="6" min="4" max="10"></label>
+        <label>Max answer seconds <input type="number" id="pSec" value="180" min="60" max="360"></label>
+      </div>
+      <label style="margin-top:12px">Job summary <textarea id="pJobSummary" rows="2">Build Python APIs and LLM-backed document services.</textarea></label>
+      <div class="row">
+        <label style="flex:1">Must-have skills (comma separated) <input type="text" id="pMust" value="Python, FastAPI, PostgreSQL"></label>
+        <label style="flex:1">Preferred skills <input type="text" id="pPref" value="Kubernetes, AWS"></label>
+      </div>
+      <h2 style="margin-top:16px">Competencies</h2>
+      <div class="tablewrap"><table id="compTable">
+        <thead><tr><th>Code</th><th>Name</th><th>Weight</th><th>Mandatory</th><th>Fallback questions</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="row">
+        <label>Model
+          <select id="planProvider">
+            <option value="local">Local Qwen (llama-server)</option>
+            <option value="mock">Mock (fixture response)</option>
+          </select>
+        </label>
+        <button id="runPlan">Generate plan</button>
+        <span id="planBusy" class="muted small hidden"><span class="spinner"></span> Planning… ~40–70 s</span>
+      </div>
+    </section>
+    <section id="planResults" class="hidden">
+      <div id="planBanner" class="banner"></div>
+      <div class="panel" id="planBody"></div>
+    </section>
+  </div>
+
+  <div id="page-tts" class="hidden">
+    <section class="panel">
+      <label>Text to speak (max 600 characters)
+        <textarea id="ttsText" rows="3" maxlength="600">Have you deployed services on K8s, and how did your CI/CD pipeline handle rollbacks?</textarea>
+      </label>
+      <div class="row">
+        <label>Provider
+          <select id="ttsProvider">
+            <option value="mock">Mock (bundled tone)</option>
+            <option value="real">Azure → Polly (needs credentials)</option>
+          </select>
+        </label>
+        <button id="runTts">Synthesize</button>
+        <span id="ttsBusy" class="muted small hidden"><span class="spinner"></span> Synthesizing…</span>
+      </div>
+      <div class="muted small" style="margin-top:8px">Tip: click “Speak” on any question in the Interview plan tab to send it here. Run the same text twice to see the cache hit.</div>
+    </section>
+    <section id="ttsResults" class="hidden">
+      <div id="ttsBanner" class="banner"></div>
+      <div class="panel" id="ttsBody"></div>
+    </section>
+  </div>
+
+  <div id="page-eval" class="hidden">
+    <section class="panel">
+      <div id="evalAnswer" class="small" style="margin-bottom:12px"></div>
+      <label>Interview question that was answered
+        <textarea id="eQuestion" rows="2">You mention designing event pipelines on Apache Kafka for settlement batches. Walk me through your own role in that work and the result.</textarea>
+      </label>
+      <div class="row">
+        <label>Turn kind
+          <select id="eKind"><option>MAIN</option><option>FOLLOW_UP</option><option>WARMUP</option><option>CLOSING</option></select>
+        </label>
+        <label style="flex:1">Candidate name (redaction hint, optional) <input type="text" id="eName" placeholder="e.g. Asha Verma"></label>
+      </div>
+      <h2 style="margin-top:14px">Competencies this question assesses</h2>
+      <div class="chips" id="eComps"></div>
+      <label style="margin-top:12px">Expected key points (one per line)
+        <textarea id="eKeys" rows="3">Describes the pipeline's purpose
+States own decisions and actions
+Describes the outcome or impact</textarea>
+      </label>
+      <div class="row">
+        <label style="flex:1">Strong signals (one per line) <textarea id="eStrong" rows="2">Names concrete design choices and why</textarea></label>
+        <label style="flex:1">Weak signals (one per line) <textarea id="eWeak" rows="2">Describes only team work without own role</textarea></label>
+      </div>
+      <div class="row">
+        <label>Model
+          <select id="evalProvider">
+            <option value="local">Local Qwen (llama-server)</option>
+            <option value="mock">Mock (fixture response)</option>
+          </select>
+        </label>
+        <button id="runEval">Run follow-up + assessment</button>
+        <button class="ghost" id="useLastQ">Use a question from the plan (tab 4)</button>
+        <span id="evalBusy" class="muted small hidden"><span class="spinner"></span> Evaluating… ~10 s follow-up + ~30 s assessment</span>
+      </div>
+      <div class="muted small" style="margin-top:8px">Follow-up runs only for MAIN turns. WARMUP and CLOSING answers are never scored (§7.5).</div>
+    </section>
+    <section id="evalResults" class="hidden">
+      <div class="panel" id="fuBody"></div>
+      <div class="panel" id="aaBody"></div>
+    </section>
+  </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -297,8 +401,10 @@ function render(d){
 // ---------- step navigation ----------
 document.querySelectorAll(".step").forEach(b => b.onclick = () => {
   document.querySelectorAll(".step").forEach(x => x.classList.toggle("on", x === b));
-  ["parse","match","stt"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
+  ["parse","match","stt","plan","tts","eval"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
   if(b.dataset.p === "match") refreshMatchCv();
+  if(b.dataset.p === "plan") refreshPlanCv();
+  if(b.dataset.p === "eval") refreshEval();
 });
 
 // ---------- CV_MATCH ----------
@@ -393,6 +499,192 @@ function renderMatch(d){
     <h2 style="margin-top:18px">Raw JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(d, null, 2))}</pre></details>`;
 }
 
+// ---------- INTERVIEW_PLAN ----------
+let planComps = [];
+async function loadComps(){
+  planComps = (await (await fetch("/api/plan/defaults")).json()).competencies;
+  $("compTable").tBodies[0].innerHTML = planComps.map((c, i) => `<tr>
+    <td><b>${esc(c.code)}</b></td><td>${esc(c.name)}</td>
+    <td><input type="number" min="0" max="100" value="${c.weight}" data-i="${i}" class="cw"></td>
+    <td><input type="checkbox" ${c.mandatory ? "checked" : ""} data-i="${i}" class="cm" style="width:auto"></td>
+    <td class="muted small">${c.fallbackQuestions.length} approved (§8.2)</td></tr>`).join("");
+}
+loadComps();
+function refreshPlanCv(){
+  $("planCv").innerHTML = parsed
+    ? `Use the CV parsed in step 1 (<b>${esc(parsed.file)}</b>) for CV-anchored questions`
+    : `No CV parsed in step 1 — the plan will be built without CV context (CV_CONTEXT_MISSING)`;
+  $("useCv").disabled = !parsed; if(!parsed) $("useCv").checked = false;
+}
+const list = id => $(id).value.split(",").map(x => x.trim()).filter(Boolean);
+
+$("runPlan").onclick = async () => {
+  $("runPlan").disabled = true; $("planBusy").classList.remove("hidden");
+  try{
+    const comps = planComps.map((c, i) => ({...c,
+      weight: parseFloat(document.querySelector(`.cw[data-i="${i}"]`).value || "0"),
+      mandatory: document.querySelector(`.cm[data-i="${i}"]`).checked}));
+    const body = {provider: $("planProvider").value, parseId: parsed?.id, useCv: $("useCv").checked,
+      mainQuestionCount: parseInt($("pN").value, 10), maxAnswerSeconds: parseInt($("pSec").value, 10), competencies: comps,
+      job: {title: $("pJobTitle").value.trim(), summary: $("pJobSummary").value.trim(), mustHaveSkills: list("pMust"), preferredSkills: list("pPref")}};
+    const r = await fetch("/api/plan", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderPlan(d);
+  }catch(e){
+    $("planResults").classList.remove("hidden");
+    $("planBanner").className = "banner bad"; $("planBanner").textContent = "Error: " + e.message; $("planBody").innerHTML = "";
+  }finally{ $("runPlan").disabled = false; $("planBusy").classList.add("hidden"); }
+};
+
+function renderPlan(d){
+  $("planResults").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed");
+  $("planBanner").className = "banner " + (ok ? "ok" : "bad");
+  $("planBanner").textContent = (d.cvFile ? d.cvFile + " · " : "No CV · ") + (ok
+    ? `Completed in ${d.seconds}s — ${p.run.validationStatus} · ${p.questionCount} questions, ${p.fallbackUsedCount} from fallback bank`
+    : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`);
+  const calls = Object.entries(d.modelCalls || {}).map(([k,v]) => `<details><summary>${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
+  if(!ok){ $("planBody").innerHTML = calls; return; }
+  const li = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  lastPlan = d.plan;
+  const qs = d.plan.questions.map(q => `
+    <div class="role" style="border-left-color:${q.source === "FALLBACK_BANK" ? "var(--warn)" : "var(--accent)"}">
+      <b>${esc(q.questionId)} · ${esc(q.text)}</b>
+      <span class="muted small">${esc(q.competencyCodes.join(" + "))} · ${esc(q.questionType)} · ${q.timeBudgetSeconds}s ·
+        <span class="chip ${q.source === "FALLBACK_BANK" ? "warn" : ""}">${q.source === "FALLBACK_BANK" ? "fallback bank" : "AI generated"}</span></span>
+      ${q.cvAnchor ? `<div class="quote">CV anchor: ${esc(q.cvAnchor.claim)} — “${esc(q.cvAnchor.quote)}”</div>` : ""}
+      <details style="margin-top:6px"><summary class="small">Expected answer rubric</summary>
+        <div class="grid small"><div><b>Key points</b>${li(q.expectedAnswerRubric.keyPoints)}</div>
+        <div><b>Strong signals</b>${li(q.expectedAnswerRubric.strongSignals)}</div>
+        <div><b>Weak signals</b>${li(q.expectedAnswerRubric.weakSignals)}</div></div></details>
+      <button class="ghost speak" data-t="${esc(q.text)}" style="margin-top:6px">🔊 Speak</button>
+    </div>`).join("");
+  const cov = Object.entries(d.plan.coverage).map(([c, ids]) => `<tr><td>${esc(c)}</td><td>${esc(ids.join(", "))}</td></tr>`).join("");
+  $("planBody").innerHTML = `<h2>Questions</h2>${qs}
+    <div class="grid"><div><h2>Coverage</h2><table>${cov}</table></div><div><h2>Warnings</h2>${chips(d.plan.warnings, "warn")}</div>
+    <div><h2>Model run</h2>${kv({model: p.run.model, latency: `${(p.run.latencyMs/1000).toFixed(1)} s`, "tokens in/out": `${p.run.inputTokens ?? "—"} / ${p.run.outputTokens ?? "—"}`})}</div></div>
+    <h2 style="margin-top:18px">Model calls</h2>${calls || '<span class="muted">none</span>'}
+    <h2 style="margin-top:18px">Raw JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(d, null, 2))}</pre></details>`;
+  document.querySelectorAll(".speak").forEach(b => b.onclick = () => {
+    $("ttsText").value = b.dataset.t;
+    document.querySelector('.step[data-p="tts"]').click();
+    $("runTts").click();
+  });
+}
+
+// ---------- TTS ----------
+$("runTts").onclick = async () => {
+  $("runTts").disabled = true; $("ttsBusy").classList.remove("hidden");
+  try{
+    const r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({text: $("ttsText").value, provider: $("ttsProvider").value})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderTts(d);
+  }catch(e){
+    $("ttsResults").classList.remove("hidden");
+    $("ttsBanner").className = "banner bad"; $("ttsBanner").textContent = "Error: " + e.message; $("ttsBody").innerHTML = "";
+  }finally{ $("runTts").disabled = false; $("ttsBusy").classList.add("hidden"); }
+};
+function renderTts(d){
+  $("ttsResults").classList.remove("hidden");
+  const p = d.payload, ok = d.topic.endsWith(".completed");
+  $("ttsBanner").className = "banner " + (ok ? "ok" : "bad");
+  $("ttsBanner").textContent = ok ? `${p.cacheHit ? "Cache hit" : "Synthesized"} in ${d.seconds}s — ${p.provider} / ${p.voiceId}`
+                                  : `Failed: ${p.errorCode} (${p.errorClass}) — ${p.message}`;
+  $("ttsBody").innerHTML = (ok ? `<audio controls autoplay src="data:audio/mpeg;base64,${d.audioB64}" style="width:100%"></audio>` : "") + `
+    <div class="grid" style="margin-top:12px">
+      <div><h2>Spoken text (after lexicon)</h2><p>${d.spokenText}</p></div>
+      ${ok ? `<div><h2>Result</h2>${kv({provider: p.provider, voice: p.voiceId, duration: `${(p.durationMs/1000).toFixed(1)} s`, "cache hit": p.cacheHit, attempts: p.run.providerAttempts})}</div>` : ""}
+    </div>
+    ${ok && p.provider === "mock" ? '<div class="muted small">The mock plays a short tone, not speech (§11.3). Real voices need Azure or AWS credentials.</div>' : ""}`;
+}
+
+// ---------- FOLLOWUP + ANSWER_ASSESSMENT ----------
+let lastTranscript = null;      // {id, name, text} from tab 3
+let lastPlan = null;            // plan from tab 4
+const STD = ["TECHNICAL_SKILL","PROBLEM_SOLVING","PRACTICAL_EXPERIENCE","COMMUNICATION","ROLE_FIT"];
+$("eComps").innerHTML = STD.map(c => `<label class="chip" style="cursor:pointer"><input type="checkbox" value="${c}" ${["PRACTICAL_EXPERIENCE","TECHNICAL_SKILL"].includes(c) ? "checked" : ""} style="width:auto;margin-right:4px">${c}</label>`).join("");
+function refreshEval(){
+  $("evalAnswer").innerHTML = lastTranscript
+    ? `Evaluating your answer from step 3: <b>${esc(lastTranscript.name)}</b><div class="quote">“${esc(lastTranscript.text.slice(0, 220))}${lastTranscript.text.length > 220 ? "…" : ""}”</div>`
+    : `<span style="color:var(--bad)">Record or upload an answer in step 3 and transcribe it first.</span>`;
+  $("useLastQ").disabled = !lastPlan;
+}
+const lines = id => $(id).value.split("\n").map(x => x.trim()).filter(Boolean);
+$("useLastQ").onclick = () => {
+  if(!lastPlan) return;
+  const qs = lastPlan.questions, pick = prompt(qs.map(q => `${q.questionId}: ${q.text}`).join("\n\n") + "\n\nWhich question? (e.g. q1)", "q1");
+  const q = qs.find(x => x.questionId === (pick || "").trim());
+  if(!q) return;
+  $("eQuestion").value = q.text;
+  document.querySelectorAll("#eComps input").forEach(i => i.checked = q.competencyCodes.includes(i.value));
+  $("eKeys").value = q.expectedAnswerRubric.keyPoints.join("\n");
+  $("eStrong").value = q.expectedAnswerRubric.strongSignals.join("\n");
+  $("eWeak").value = q.expectedAnswerRubric.weakSignals.join("\n");
+};
+$("runEval").onclick = async () => {
+  $("runEval").disabled = true; $("evalBusy").classList.remove("hidden");
+  try{
+    if(!lastTranscript) throw new Error("Transcribe an answer in step 3 first.");
+    const codes = [...document.querySelectorAll("#eComps input:checked")].map(i => i.value);
+    if(!codes.length) throw new Error("Tick at least one competency.");
+    const body = {transcriptId: lastTranscript.id, provider: $("evalProvider").value, turnKind: $("eKind").value,
+      candidateName: $("eName").value.trim(),
+      question: {text: $("eQuestion").value.trim(), competencyCodes: codes,
+                 expectedAnswerRubric: {keyPoints: lines("eKeys"), strongSignals: lines("eStrong"), weakSignals: lines("eWeak")}}};
+    const r = await fetch("/api/evaluate", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    renderEval(d);
+  }catch(e){
+    $("evalResults").classList.remove("hidden");
+    $("fuBody").innerHTML = `<div class="banner bad">Error: ${esc(e.message)}</div>`; $("aaBody").innerHTML = "";
+  }finally{ $("runEval").disabled = false; $("evalBusy").classList.add("hidden"); }
+};
+const callsHtml = c => Object.entries(c || {}).map(([k,v]) => `<details><summary class="small">${esc(k.split("/").pop())}</summary><pre>${esc(JSON.stringify(v, null, 2))}</pre></details>`).join("");
+function renderEval(d){
+  $("evalResults").classList.remove("hidden");
+  const fu = d.followup;
+  if(!fu){ $("fuBody").innerHTML = `<h2>Follow-up decision</h2><span class="muted">Not run for ${esc($("eKind").value)} turns.</span>`; }
+  else{
+    const p = fu.payload, ok = fu.topic.endsWith(".completed"), o = p.output;
+    $("fuBody").innerHTML = `<h2>Follow-up decision</h2>` + (ok ? `
+      <div class="banner ${o.decision === "ASK_FOLLOW_UP" ? "ok" : ""}" style="${o.decision === "ASK_FOLLOW_UP" ? "" : "background:var(--chip);color:var(--ink)"}">
+        ${o.decision === "ASK_FOLLOW_UP" ? "Ask a follow-up" : "Move to the next question"} · ${esc(o.reasonCode)} · ${fu.seconds}s
+        <span class="small">(production deadline 12 s; target p95 ≤ 6 s on Kimi)</span></div>
+      ${o.followUp ? `<p style="font-size:16px"><b>“${esc(o.followUp.text)}”</b></p><div class="muted small">Competencies: ${esc(o.followUp.competencyCodes.join(", "))}</div>
+        <button class="ghost" id="speakFu" style="margin-top:8px">🔊 Speak follow-up</button>` : ""}
+      <div class="muted small" style="margin-top:8px">${p.run.validationStatus === "NOT_CALLED" ? "No speech — decided by code without a model call." : ""}</div>`
+      : `<div class="banner bad">Failed: ${esc(p.errorCode)} — ${esc(p.message)} (core would simply move on)</div>`) +
+      `<h2 style="margin-top:12px">Model calls</h2>${callsHtml(fu.calls) || '<span class="muted">none</span>'}`;
+    const b = document.getElementById("speakFu");
+    if(b) b.onclick = () => { $("ttsText").value = o.followUp.text; document.querySelector('.step[data-p="tts"]').click(); $("runTts").click(); };
+  }
+  const aa = d.assessment, p = aa.payload, ok = aa.topic.endsWith(".completed");
+  if(!ok){ $("aaBody").innerHTML = `<h2>Answer assessment</h2><div class="banner bad">Failed: ${esc(p.errorCode)} (${esc(p.errorClass)}) — ${esc(p.message)}</div>${callsHtml(aa.calls)}`; return; }
+  const a = aa.assessment;
+  const scoreCell = s => s.score == null ? `<span class="st UNKNOWN">not assessed</span><div class="muted small">${esc(s.notAssessedReason)}</div>`
+    : `<span style="font-size:22px;font-weight:700">${s.score}</span><span class="muted"> / 5</span>`;
+  const rows = a.scores.map(s => `<tr><td><b>${esc(s.competencyCode)}</b></td><td>${scoreCell(s)}</td>
+      <td><span class="chip ${s.confidence === "LOW" ? "warn" : ""}">${esc(s.confidence)}</span></td>
+      <td>${esc(s.rationale)}${s.evidence.map(e => `<div class="quote">[${e.segmentIndex}] “${esc(e.quote)}”</div>`).join("")}</td></tr>`).join("");
+  const li = (arr, f) => arr.length ? `<ul>${arr.map(x => `<li>${f(x)}</li>`).join("")}</ul>` : `<span class="muted">none</span>`;
+  $("aaBody").innerHTML = `<h2>Answer assessment</h2>
+    <div class="banner ok">Completed in ${aa.seconds}s — ${esc(p.run.validationStatus)}${p.run.repairAttempted ? " (after one repair)" : ""}</div>
+    ${a.scores.length ? `<div class="tablewrap"><table><tr><th>Competency</th><th>Score</th><th>Confidence</th><th>Rationale and evidence</th></tr>${rows}</table></div>`
+                      : `<p class="muted">No scores — ${esc($("eKind").value)} turns are not scored.</p>`}
+    <div class="grid" style="margin-top:14px">
+      <div><h2>Answer flags</h2>${chips(a.answerFlags, "warn")}</div>
+      <div><h2>Candidate-reported claims <span class="muted small">(not verified)</span></h2>${li(a.candidateReportedClaims, c => `${esc(c.claim)} <span class="muted small">[${c.segmentIndex}]</span>`)}</div>
+      <div><h2>Notable evidence</h2>${li(a.notableEvidence, e => `[${e.segmentIndex}] “${esc(e.quote)}”`)}</div>
+      <div><h2>Uncertainty</h2>${li(a.uncertainty, esc)}</div>
+    </div>
+    <div class="muted small" style="margin-top:8px">The AI never produces an overall score or a hiring recommendation; core combines per-answer scores (§8.3–8.4).</div>
+    <h2 style="margin-top:12px">Model calls</h2>${callsHtml(aa.calls) || '<span class="muted">none</span>'}`;
+}
+
 // ---------- STT ----------
 let audioBlob = null, audioName = "", rec = null, recTimer = null;
 function setAudio(blob, name){
@@ -437,6 +729,8 @@ $("runStt").onclick = async () => {
 const sec = ms => (ms / 1000).toFixed(2);
 function renderStt(d){
   $("sttResults").classList.remove("hidden");
+  if(d.transcriptId) lastTranscript = {id: d.transcriptId, name: audioName,
+                                       text: d.transcript.segments.map(s => s.text).join(" ")};
   const p = d.payload, ok = d.topic.endsWith(".completed");
   $("sttBanner").className = "banner " + (ok ? "ok" : "bad");
   if(!ok){ $("sttBanner").textContent = `${audioName} · Failed: ${p.errorCode} — ${p.message}`; $("sttBody").innerHTML = ""; return; }
@@ -452,7 +746,9 @@ function renderStt(d){
     </div>
     <h2 style="margin-top:18px">Full text</h2><p>${esc(t.segments.map(s => s.text).join(" ")) || '<span class="muted">(no speech)</span>'}</p>
     <h2>Segments</h2>${segs || '<span class="muted">none</span>'}
+    <button id="toEval" style="margin-top:12px">Evaluate this answer →</button>
     <h2 style="margin-top:18px">Raw transcript JSON</h2><details><summary>show</summary><pre>${esc(JSON.stringify(t, null, 2))}</pre></details>`;
+  $("toEval").onclick = () => document.querySelector('.step[data-p="eval"]').click();
 }
 </script>
 </body>

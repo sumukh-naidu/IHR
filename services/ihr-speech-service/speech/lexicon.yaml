@@ -1,0 +1,28 @@
+# Speech-only text normalisation (A-28, §11.2 step 2). The displayed text is unchanged.
+# Matched whole-word, case-sensitive, longest first. Other acronyms are left as written
+# (spoken letter by letter by the voice). Maintained by the AI team via pull request.
+version: 1
+substitutions:
+  K8s: Kubernetes
+  C#: C sharp
+  F#: F sharp
+  C++: C plus plus
+  .NET: dot net
+  ASP.NET: A S P dot net
+  CI/CD: C I C D
+  Node.js: Node J S
+  Vue.js: Vue J S
+  Next.js: Next J S
+  React.js: React J S
+  PostgreSQL: Postgres Q L
+  MySQL: My S Q L
+  NoSQL: No S Q L
+  GraphQL: Graph Q L
+  OAuth: O Auth
+  iOS: I O S
+  UI/UX: U I U X
+  e.g.: for example
+  i.e.: that is
+  etc.: et cetera
+  vs.: versus
+  "&": and
