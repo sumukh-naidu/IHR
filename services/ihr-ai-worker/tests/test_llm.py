@@ -187,3 +187,17 @@ def test_mock_llm_returns_kimi_response_fixture():
     r = MockLlmClient().complete_json(task="CV_PARSE", model_slot="standard", messages=[], temperature=0.1,
                                       max_tokens=1, timeout_s=1, deadline=utc_now())
     assert json.loads(r.content)["currentEmployer"] == "Acme Payments"
+
+
+def test_local_provider_config(monkeypatch):
+    from ihr_ai_worker.config import AiWorkerConfig
+    from ihr_ai_worker.llm.kimi import build_llm_client
+    monkeypatch.setenv("AI_PROVIDER", "local")
+    monkeypatch.delenv("KIMI_API_KEY", raising=False)
+    monkeypatch.setenv("LOCAL_LLM_MODEL", "qwen-test")
+    cfg = AiWorkerConfig.from_env()
+    assert cfg.kimi_api_base_url == "http://127.0.0.1:8081/v1"
+    assert cfg.kimi_model_standard == cfg.kimi_model_realtime == "qwen-test"
+    client = build_llm_client(cfg)
+    assert client.provider_name == "local"
+    assert client.model_for("realtime") == "qwen-test"

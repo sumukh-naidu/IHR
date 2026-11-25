@@ -15,6 +15,10 @@ AI-team scope of IHR V1, built to the **IHR V1 AI Specification v1.1** (the grou
 | `services/ihr-ai-worker/` | Kimi adapter (§4), repair-once flow (A-07), task registry, mock mode (A.8) |
 | `services/ihr-speech-service/` | STT and TTS mocks (§11.3) with the real TTS cache and text guard |
 | `deploy/compose/ai-mocks.compose.yml` | Mock services to add to the Platform compose stack |
+| `docs/prompts/` | Prompt files v1.0.0 (§7.0–7.6) and `active.yaml` (A-11) |
+| `docs/architecture/adr/` | Decision change records (§1.4) |
+| `eval/` | Evaluation harness skeleton and §13.3 gates; datasets via Git LFS |
+| `.github/workflows/contracts-check.yml` | CI: contracts up to date, tests, offline eval |
 | `tools/gen_contracts.py`, `tools/gen_fixtures.py` | Regenerate contracts and fixtures (CI checks they are up to date) |
 
 ## Develop
@@ -30,13 +34,24 @@ pytest
 ## Run in mock mode
 
 `WORKER_ROLE=standard|realtime AI_PROVIDER=mock python -m ihr_ai_worker.main`
+
+Local model for integration testing (until the Kimi key arrives; ASSUMPTIONS #19):
+
+```
+llama-server -m /Users/infra/idox_ai/models/Qwen3.6-35B-A3B-UD-IQ4_XS.gguf \
+  --alias qwen3.6-35b-a3b --port 8081 -c 32768 --jinja
+AI_PROVIDER=local LOCAL_LLM_BASE_URL=http://127.0.0.1:8081/v1 python -m ihr_ai_worker.main
+```
+
+Same adapter as Kimi (JSON mode, retries, breaker). Eval gate results only count on Kimi.
 `WORKER_ROLE=stt|tts STT_PROVIDER=mock TTS_PROVIDER_PRIMARY=mock python -m speech.main`
 
 Both need `KAFKA_BOOTSTRAP_SERVERS` and the `S3_*` variables (§3.3).
 
 ## Status (Sprint 1)
 
-Done: contracts, fixtures, the worker framework, the Kimi adapter (retries, circuit breaker,
-rate limit, error mapping, repair once), and mock mode for every task.
-Next, per §15: S2 text extraction, redaction and CV_PARSE; S3 CV_MATCH and STT on GPU;
-S4 TTS providers and INTERVIEW_PLAN; S5 FOLLOWUP and ANSWER_ASSESSMENT; S6 FINAL_REPORT.
+Done: contracts, fixtures, worker framework, Kimi adapter (retries, circuit breaker, rate
+limit, error mapping, repair once), mock mode for every task, prompt loader (A-11), debug
+capture (A-12), contracts-check CI, eval harness skeleton, `tools/kimi_list_models.py` (S-11).
+Open S1 exit items: mocks in the Platform compose stack, Kimi smoke call (needs key).
+Next, per §15: S2 text extraction, redaction and CV_PARSE.

@@ -1,0 +1,9 @@
+# Active prompt versions bundled into the ihr-ai-worker image (A-11).
+# Rollback = revert this file + redeploy (§15.1).
+base_rules: 1.0.0
+cv_parse: 1.0.0
+cv_match: 1.0.0
+interview_plan: 1.0.0
+followup_decision: 1.0.0
+answer_assessment: 1.0.0
+final_report: 1.0.0

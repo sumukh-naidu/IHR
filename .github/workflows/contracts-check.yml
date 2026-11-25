@@ -1,0 +1,26 @@
+# contracts-check (A.9 step 2, §13.2 offline parts): regenerated contracts/fixtures must be
+# unchanged, every fixture must validate, and the offline test suite must pass.
+name: contracts-check
+on:
+  pull_request:
+  push:
+    branches: [ihr_ai_services]
+jobs:
+  contracts-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv --python 3.12
+      - run: |
+          uv pip install -e libs/py-worker-common -e services/ihr-ai-worker -e services/ihr-speech-service \
+            pytest respx numpy
+      - name: Contracts and fixtures are up to date
+        run: |
+          .venv/bin/python tools/gen_contracts.py
+          .venv/bin/python tools/gen_fixtures.py
+          git diff --exit-code -- contracts/
+      - name: Tests (contracts, worker framework, adapters, mocks, prompts)
+        run: .venv/bin/python -m pytest
+      - name: Evaluation harness (offline)
+        run: .venv/bin/python eval/run.py --task ALL --offline

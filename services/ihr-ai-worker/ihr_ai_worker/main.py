@@ -25,7 +25,7 @@ def build_processors(cfg: AiWorkerConfig, storage) -> list[Processor]:
         else:
             # Real task pipelines arrive per the delivery plan (§15): CV_PARSE S2, CV_MATCH S3,
             # INTERVIEW_PLAN S4, FOLLOWUP + ANSWER_ASSESSMENT S5, FINAL_REPORT S6.
-            raise SystemExit(f"AI_PROVIDER=kimi: task {spec.task} is not implemented yet; use AI_PROVIDER=mock")
+            raise SystemExit(f"AI_PROVIDER={cfg.ai_provider}: task {spec.task} is not implemented yet; use AI_PROVIDER=mock")
         processors.append(Processor(handler, storage, "ihr-ai-worker", "ihr_ai",
                                     max_workers=cfg.kimi_max_concurrency))
     return processors

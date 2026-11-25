@@ -22,3 +22,5 @@ contradicts itself, the choices below were made. Each one is open for an ADR (§
 | 15 | `final_report.v1` evidence refs | The stored artefact keeps the turn label (`T#`) and segment index; mapping to turnId uses the request's `turns[]`. |
 | 16 | Media topics (`ihr.media.*`) | Not generated here: the Platform team (producer/consumer) owns those schemas. |
 | 17 | Timestamps | `occurredAt` / `deadlineAt` must use the format `YYYY-MM-DDTHH:MM:SS.mmmZ` (A.2). |
+| 18 | `promptSha256` (A-11) | Hash of the assembled system template (base_rules + task text + schema + example) before per-request variables are filled. The example output is the task's `kimi_response.json` fixture. |
+| 19 | `AI_PROVIDER=local` | Development/integration-test stand-in only: the Kimi adapter pointed at a local OpenAI-compatible `llama-server` running Qwen3.6-35B-A3B (GGUF) for both model slots. Not a production provider; no §13.3 eval gate result counts unless produced on Kimi. Removed from use once the Kimi key is available. |

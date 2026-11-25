@@ -11,6 +11,7 @@ WORKDIR /app
 COPY libs/py-worker-common /app/libs/py-worker-common
 COPY services/ihr-ai-worker /app/services/ihr-ai-worker
 COPY contracts /app/contracts
+COPY docs/prompts /app/prompts
 RUN uv pip install --system /app/libs/py-worker-common /app/services/ihr-ai-worker
 
 ENV IHR_CONTRACTS_DIR=/app/contracts \

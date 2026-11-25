@@ -45,7 +45,8 @@ class KimiClient:
 
     def __init__(self, *, base_url: str, api_key: str, model_standard: str, model_realtime: str,
                  max_concurrency: int, rpm_limit: int, sdk_client: openai.OpenAI | None = None,
-                 sleep=time.sleep) -> None:
+                 sleep=time.sleep, provider_name: str = "moonshot") -> None:
+        self.provider_name = provider_name
         self._client = sdk_client or openai.OpenAI(base_url=base_url, api_key=api_key, max_retries=0)
         self._models = {"standard": model_standard, "realtime": model_realtime}
         self._breakers = {slot: CircuitBreaker(f"kimi-{slot}") for slot in self._models}
@@ -148,6 +149,14 @@ class KimiClient:
             if e.status_code == 429:
                 raise _Transient("rate_limited", _retry_after(e)) from None
             raise KimiConfigError(str(e.status_code)) from None
+
+
+def build_llm_client(cfg) -> "KimiClient":
+    """Kimi in production; the same adapter against a local llama-server when AI_PROVIDER=local."""
+    return KimiClient(
+        base_url=cfg.kimi_api_base_url, api_key=cfg.kimi_api_key or "", model_standard=cfg.kimi_model_standard,
+        model_realtime=cfg.kimi_model_realtime, max_concurrency=cfg.kimi_max_concurrency,
+        rpm_limit=cfg.kimi_rpm_limit, provider_name="local" if cfg.ai_provider == "local" else "moonshot")
 
 
 def _retry_after(e: openai.APIStatusError) -> float | None:

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class AiWorkerConfig:
     worker_role: str                 # standard | realtime (A-02)
-    ai_provider: str                 # kimi | mock
+    ai_provider: str                 # kimi | local | mock (local = dev stand-in, ASSUMPTIONS #19)
     kimi_api_base_url: str
     kimi_api_key: str | None
     kimi_model_standard: str
@@ -31,18 +31,29 @@ class AiWorkerConfig:
         if role not in ("standard", "realtime"):
             raise ValueError("WORKER_ROLE must be standard or realtime")
         provider = os.environ.get("AI_PROVIDER", "mock")
-        if provider not in ("kimi", "mock"):
-            raise ValueError("AI_PROVIDER must be kimi or mock")
+        if provider not in ("kimi", "local", "mock"):
+            raise ValueError("AI_PROVIDER must be kimi, local or mock")
         key = os.environ.get("KIMI_API_KEY")
         if provider == "kimi" and not key:
             raise ValueError("KIMI_API_KEY is required when AI_PROVIDER=kimi")
+        if provider == "local":
+            # Local OpenAI-compatible server (llama-server) for integration testing only.
+            base_url = os.environ.get("LOCAL_LLM_BASE_URL", "http://127.0.0.1:8081/v1")
+            key = os.environ.get("LOCAL_LLM_API_KEY", "local")
+            local_model = os.environ.get("LOCAL_LLM_MODEL", "qwen3.6-35b-a3b")
+            model_std = os.environ.get("LOCAL_LLM_MODEL_STANDARD", local_model)
+            model_rt = os.environ.get("LOCAL_LLM_MODEL_REALTIME", local_model)
+        else:
+            base_url = os.environ.get("KIMI_API_BASE_URL", "https://api.moonshot.ai/v1")
+            model_std = os.environ.get("KIMI_MODEL_STANDARD", "kimi-k2-0905-preview")
+            model_rt = os.environ.get("KIMI_MODEL_REALTIME", "kimi-k2-turbo-preview")
         return cls(
             worker_role=role,
             ai_provider=provider,
-            kimi_api_base_url=os.environ.get("KIMI_API_BASE_URL", "https://api.moonshot.ai/v1"),
+            kimi_api_base_url=base_url,
             kimi_api_key=key,
-            kimi_model_standard=os.environ.get("KIMI_MODEL_STANDARD", "kimi-k2-0905-preview"),
-            kimi_model_realtime=os.environ.get("KIMI_MODEL_REALTIME", "kimi-k2-turbo-preview"),
+            kimi_model_standard=model_std,
+            kimi_model_realtime=model_rt,
             kimi_max_concurrency=int(os.environ.get("KIMI_MAX_CONCURRENCY", "4" if role == "realtime" else "8")),
             kimi_rpm_limit=int(os.environ.get("KIMI_RPM_LIMIT", "60")),
             kimi_monthly_token_budget=int(os.environ.get("KIMI_MONTHLY_TOKEN_BUDGET", "200000000")),
