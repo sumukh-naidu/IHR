@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/ai-schemas/tts_audio.v1.json",
+  "title": "tts_audio.v1 (chapter 7)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "voiceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cacheHit": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "durationMs",
+    "provider",
+    "voiceId",
+    "cacheHit"
+  ]
+}

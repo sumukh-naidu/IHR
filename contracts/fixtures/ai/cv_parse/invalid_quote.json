@@ -1,0 +1,81 @@
+{
+  "headline": "Backend engineer with Java and Spring Boot experience in payments systems.",
+  "currentTitle": "Senior Software Engineer",
+  "currentEmployer": "Acme Payments",
+  "location": null,
+  "employmentHistory": [
+    {
+      "employer": "Acme Payments",
+      "title": "Senior Software Engineer",
+      "startDate": "2022-04",
+      "endDate": "PRESENT",
+      "datePrecision": "MONTH",
+      "employmentType": "FULL_TIME",
+      "highlights": [
+        "Built Spring Boot services for card settlement",
+        "Designed Kafka event pipelines for settlement batches"
+      ],
+      "skillsMentioned": [
+        "Java",
+        "Spring Boot",
+        "Kafka"
+      ]
+    },
+    {
+      "employer": "Globex Fintech",
+      "title": "Software Engineer",
+      "startDate": "2018-07",
+      "endDate": "2022-03",
+      "datePrecision": "MONTH",
+      "employmentType": "FULL_TIME",
+      "highlights": [
+        "Developed Java REST APIs for merchant onboarding",
+        "Tuned PostgreSQL queries and indexes for reporting"
+      ],
+      "skillsMentioned": [
+        "Java",
+        "PostgreSQL"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "XYZ Institute of Technology",
+      "qualification": "B.E.",
+      "fieldOfStudy": "Computer Engineering",
+      "startYear": 2014,
+      "endYear": 2018
+    }
+  ],
+  "skills": [
+    {
+      "name": "Java",
+      "quote": "Developed REST APIs in Java 11",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Spring Boot",
+      "quote": "Built Spring Boot services for card settlement",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Kafka",
+      "quote": "led a Kubernetes migration for all services",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "PostgreSQL",
+      "quote": "Wrote PostgreSQL queries and tuned indexes",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Docker",
+      "quote": "Java | Spring Boot | Kafka | PostgreSQL | Docker",
+      "sourceSection": "SKILLS_SECTION"
+    }
+  ],
+  "certifications": [],
+  "projects": [],
+  "missingOrAmbiguousFields": [],
+  "extractionWarnings": []
+}

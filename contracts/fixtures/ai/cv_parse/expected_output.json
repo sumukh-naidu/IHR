@@ -1,0 +1,151 @@
+{
+  "headline": "Backend engineer with Java and Spring Boot experience in payments systems.",
+  "currentTitle": "Senior Software Engineer",
+  "currentEmployer": "Acme Payments",
+  "location": null,
+  "employmentHistory": [
+    {
+      "employer": "Acme Payments",
+      "title": "Senior Software Engineer",
+      "startDate": "2022-04",
+      "endDate": "PRESENT",
+      "datePrecision": "MONTH",
+      "employmentType": "FULL_TIME",
+      "highlights": [
+        "Built Spring Boot services for card settlement",
+        "Designed Kafka event pipelines for settlement batches"
+      ],
+      "skillsMentioned": [
+        "Java",
+        "Spring Boot",
+        "Kafka"
+      ]
+    },
+    {
+      "employer": "Globex Fintech",
+      "title": "Software Engineer",
+      "startDate": "2018-07",
+      "endDate": "2022-03",
+      "datePrecision": "MONTH",
+      "employmentType": "FULL_TIME",
+      "highlights": [
+        "Developed Java REST APIs for merchant onboarding",
+        "Tuned PostgreSQL queries and indexes for reporting"
+      ],
+      "skillsMentioned": [
+        "Java",
+        "PostgreSQL"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "XYZ Institute of Technology",
+      "qualification": "B.E.",
+      "fieldOfStudy": "Computer Engineering",
+      "startYear": 2014,
+      "endYear": 2018
+    }
+  ],
+  "skills": [
+    {
+      "name": "Java",
+      "quote": "Developed REST APIs in Java 11",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Spring Boot",
+      "quote": "Built Spring Boot services for card settlement",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Kafka",
+      "quote": "event pipelines on Apache Kafka",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "PostgreSQL",
+      "quote": "Wrote PostgreSQL queries and tuned indexes",
+      "sourceSection": "EXPERIENCE"
+    },
+    {
+      "name": "Docker",
+      "quote": "Java | Spring Boot | Kafka | PostgreSQL | Docker",
+      "sourceSection": "SKILLS_SECTION"
+    }
+  ],
+  "certifications": [],
+  "projects": [],
+  "missingOrAmbiguousFields": [],
+  "extractionWarnings": [],
+  "identity": {
+    "name": {
+      "value": "Asha Verma",
+      "confidence": 0.6,
+      "source": "LOCAL_HEADER"
+    },
+    "email": {
+      "value": "asha.verma@example.com",
+      "confidence": 1.0,
+      "source": "LOCAL_REGEX"
+    },
+    "phone": {
+      "value": "+919876543210",
+      "confidence": 1.0,
+      "source": "LOCAL_REGEX"
+    }
+  },
+  "derived": {
+    "totalExperienceMonths": 102,
+    "skillsCanonical": [
+      {
+        "name": "Java",
+        "originalNames": [
+          "Java"
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "originalNames": [
+          "Spring Boot"
+        ]
+      },
+      {
+        "name": "Kafka",
+        "originalNames": [
+          "Kafka"
+        ]
+      },
+      {
+        "name": "PostgreSQL",
+        "originalNames": [
+          "PostgreSQL"
+        ]
+      },
+      {
+        "name": "Docker",
+        "originalNames": [
+          "Docker"
+        ]
+      }
+    ],
+    "mostRecentRoleMonths": 57
+  },
+  "extraction": {
+    "pageCount": 1,
+    "ocrUsed": false,
+    "ocrPages": 0,
+    "textChars": 645,
+    "truncated": false,
+    "redactionCounts": {
+      "EMAIL": 1,
+      "PHONE": 1,
+      "URL": 1,
+      "GOV_ID": 0,
+      "CANDIDATE": 1,
+      "DOB": 0,
+      "LINES_REMOVED": 2
+    },
+    "warnings": []
+  }
+}

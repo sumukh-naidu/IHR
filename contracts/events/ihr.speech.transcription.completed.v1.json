@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.speech.transcription.completed.v1.json",
+  "title": "Payload of ihr.speech.transcription.completed (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "sha256",
+        "sizeBytes",
+        "mimeType"
+      ]
+    },
+    "outputSchemaVersion": {
+      "const": "transcript.v1"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promptVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promptSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "providerRequestId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "providerAttempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repairAttempted": {
+          "type": "boolean"
+        },
+        "validationStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workerVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "promptId",
+        "promptVersion",
+        "promptSha256",
+        "providerRequestId",
+        "latencyMs",
+        "inputTokens",
+        "outputTokens",
+        "providerAttempts",
+        "repairAttempted",
+        "validationStatus",
+        "workerVersion"
+      ]
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "segmentCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "avgConfidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "speechDetected": {
+      "type": "boolean"
+    },
+    "qualityFlags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "NO_SPEECH",
+          "LOW_CONFIDENCE",
+          "POSSIBLE_HALLUCINATION",
+          "CLIPPED_AUDIO",
+          "TRUNCATED_AT_LIMIT"
+        ]
+      }
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "output",
+    "outputSchemaVersion",
+    "run",
+    "durationMs",
+    "segmentCount",
+    "avgConfidence",
+    "speechDetected",
+    "qualityFlags"
+  ]
+}

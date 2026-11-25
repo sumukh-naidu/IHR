@@ -1,0 +1,10 @@
+{
+  "decision": "ASK_FOLLOW_UP",
+  "reasonCode": "PROBE_DEPTH",
+  "followUp": {
+    "text": "You mentioned an idempotency check for replayed messages. How did you decide what made a message a duplicate?",
+    "competencyCodes": [
+      "LEADERSHIP"
+    ]
+  }
+}

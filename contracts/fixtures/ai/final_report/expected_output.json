@@ -1,0 +1,99 @@
+{
+  "summary": "The interview evidence shows practical experience designing Kafka-based settlement pipelines with clear ownership and a stated outcome, and correct explanations of partition ordering and idempotent consumption. Problem-solving answers followed logical steps. Role fit was not assessed.",
+  "competencyNarratives": [
+    {
+      "competencyCode": "TECHNICAL_SKILL",
+      "narrative": "Explained that message keys keep related events ordered within a partition and described an idempotency check for replays (T1 [1], T1 [2]).",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 1
+        },
+        {
+          "turn": "T1",
+          "segmentIndex": 2
+        }
+      ]
+    },
+    {
+      "competencyCode": "PROBLEM_SOLVING",
+      "narrative": "Answers described logical investigation steps; option comparison was limited.",
+      "evidenceRefs": []
+    },
+    {
+      "competencyCode": "PRACTICAL_EXPERIENCE",
+      "narrative": "Gave a specific example with own design decisions and a stated reduction in batch time (T1 [3]).",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 3
+        }
+      ]
+    },
+    {
+      "competencyCode": "COMMUNICATION",
+      "narrative": "Answers were relevant to the questions and followed a clear structure.",
+      "evidenceRefs": []
+    },
+    {
+      "competencyCode": "ROLE_FIT",
+      "narrative": "No answer in this interview provided evidence for this competency.",
+      "evidenceRefs": []
+    }
+  ],
+  "strengths": [
+    {
+      "text": "Specific example of designing Kafka event pipelines with own decisions",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 1
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "text": "Limited evidence of comparing alternative designs",
+      "evidenceRefs": []
+    }
+  ],
+  "reviewerFocusAreas": [
+    "Explore how alternative designs were evaluated for the settlement pipeline"
+  ],
+  "limitations": [
+    "Role fit was not assessed in this interview."
+  ],
+  "computedScores": {
+    "competencies": [
+      {
+        "code": "TECHNICAL_SKILL",
+        "score": 3.7,
+        "assessedTurnCount": 3
+      },
+      {
+        "code": "PROBLEM_SOLVING",
+        "score": 3.5,
+        "assessedTurnCount": 2
+      },
+      {
+        "code": "PRACTICAL_EXPERIENCE",
+        "score": 4.0,
+        "assessedTurnCount": 1
+      },
+      {
+        "code": "COMMUNICATION",
+        "score": 3.8,
+        "assessedTurnCount": 4
+      },
+      {
+        "code": "ROLE_FIT",
+        "score": null,
+        "assessedTurnCount": 0
+      }
+    ],
+    "overallScore": 68.3,
+    "completionState": "COMPLETE",
+    "evidenceLevel": "MODERATE_EVIDENCE"
+  }
+}

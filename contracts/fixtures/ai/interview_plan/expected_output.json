@@ -1,0 +1,178 @@
+{
+  "questions": [
+    {
+      "questionId": "q1",
+      "slot": 1,
+      "competencyCodes": [
+        "PRACTICAL_EXPERIENCE",
+        "TECHNICAL_SKILL"
+      ],
+      "questionType": "PAST_EXPERIENCE",
+      "text": "You mention designing event pipelines on Apache Kafka for settlement batches. Walk me through your own role in that work and the result.",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Describes the pipeline's purpose",
+          "States own decisions and actions",
+          "Describes the outcome or impact"
+        ],
+        "strongSignals": [
+          "Names concrete design choices and why"
+        ],
+        "weakSignals": [
+          "Describes only team work without own role"
+        ]
+      },
+      "timeBudgetSeconds": 180,
+      "cvAnchor": {
+        "claim": "Designed Kafka event pipelines for settlement batches",
+        "quote": "Designed event pipelines on Apache Kafka for settlement batches"
+      },
+      "source": "AI_GENERATED"
+    },
+    {
+      "questionId": "q2",
+      "slot": 2,
+      "competencyCodes": [
+        "TECHNICAL_SKILL"
+      ],
+      "questionType": "TECHNICAL_CONCEPT",
+      "text": "How does Kafka guarantee message ordering, and what limits that guarantee in a system with several consumers?",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Ordering is per partition",
+          "Keys map messages to partitions",
+          "Consumer group assigns partitions to consumers"
+        ],
+        "strongSignals": [
+          "Mentions rebalancing or retries affecting order"
+        ],
+        "weakSignals": [
+          "Claims global ordering across topics"
+        ]
+      },
+      "timeBudgetSeconds": 180,
+      "cvAnchor": null,
+      "source": "AI_GENERATED"
+    },
+    {
+      "questionId": "q3",
+      "slot": 3,
+      "competencyCodes": [
+        "PROBLEM_SOLVING"
+      ],
+      "questionType": "SCENARIO",
+      "text": "A settlement job that ran fine yesterday now takes three times longer. How would you find the cause?",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Checks what changed",
+          "Uses metrics or logs to locate the slow step",
+          "Forms and tests hypotheses"
+        ],
+        "strongSignals": [
+          "Compares options and validates the fix"
+        ],
+        "weakSignals": [
+          "Guesses a fix without investigation"
+        ]
+      },
+      "timeBudgetSeconds": 180,
+      "cvAnchor": null,
+      "source": "AI_GENERATED"
+    },
+    {
+      "questionId": "q4",
+      "slot": 4,
+      "competencyCodes": [
+        "TECHNICAL_SKILL"
+      ],
+      "questionType": "TECHNICAL_CONCEPT",
+      "text": "Explain when you would choose a database transaction over an eventually consistent design in a payments service.",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Defines transactional guarantees",
+          "Explains eventual consistency",
+          "Relates the choice to payment correctness"
+        ],
+        "strongSignals": [
+          "Discusses trade-offs such as latency and failure handling"
+        ],
+        "weakSignals": [
+          "Gives a definition only"
+        ]
+      },
+      "timeBudgetSeconds": 180,
+      "cvAnchor": null,
+      "source": "AI_GENERATED"
+    },
+    {
+      "questionId": "q5",
+      "slot": 5,
+      "competencyCodes": [
+        "COMMUNICATION"
+      ],
+      "questionType": "SCENARIO",
+      "text": "How would you explain a production incident in your service to a business stakeholder who is not technical?",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "States impact in business terms",
+          "Explains cause simply",
+          "Describes next steps"
+        ],
+        "strongSignals": [
+          "Structures the explanation clearly"
+        ],
+        "weakSignals": [
+          "Uses unexplained jargon"
+        ]
+      },
+      "timeBudgetSeconds": 120,
+      "cvAnchor": null,
+      "source": "AI_GENERATED"
+    },
+    {
+      "questionId": "q6",
+      "slot": 6,
+      "competencyCodes": [
+        "ROLE_FIT"
+      ],
+      "questionType": "ROLE_MOTIVATION",
+      "text": "Which parts of this backend role match your experience most closely, and which would you need to build up?",
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Links experience to must-have requirements",
+          "Gives an example",
+          "Names a realistic area to develop"
+        ],
+        "strongSignals": [
+          "Links to both must-have and preferred requirements"
+        ],
+        "weakSignals": [
+          "Generic answer without examples"
+        ]
+      },
+      "timeBudgetSeconds": 120,
+      "cvAnchor": null,
+      "source": "AI_GENERATED"
+    }
+  ],
+  "coverage": {
+    "PRACTICAL_EXPERIENCE": [
+      "q1"
+    ],
+    "TECHNICAL_SKILL": [
+      "q1",
+      "q2",
+      "q4"
+    ],
+    "PROBLEM_SOLVING": [
+      "q3"
+    ],
+    "COMMUNICATION": [
+      "q5"
+    ],
+    "ROLE_FIT": [
+      "q6"
+    ]
+  },
+  "warnings": []
+}

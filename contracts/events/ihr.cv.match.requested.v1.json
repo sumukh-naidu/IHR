@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.cv.match.requested.v1.json",
+  "title": "Payload of ihr.cv.match.requested (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deadlineAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "applicationId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "cvAnalysisId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "rubricVersionId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "cvProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "sha256",
+        "sizeBytes",
+        "mimeType"
+      ]
+    },
+    "cvText": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "sha256",
+        "sizeBytes",
+        "mimeType"
+      ]
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "experienceMinMonths": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "experienceMaxMonths": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "title",
+        "summary",
+        "experienceMinMonths",
+        "experienceMaxMonths"
+      ]
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "SKILL",
+              "EXPERIENCE",
+              "EDUCATION",
+              "CERTIFICATION",
+              "DOMAIN",
+              "OTHER"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "skillName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MUST_HAVE",
+              "PREFERRED"
+            ]
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "minMonths": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "code",
+          "category",
+          "text",
+          "type",
+          "weight"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 30
+    },
+    "outputSchemaVersion": {
+      "const": "cv_match.v1"
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "deadlineAt",
+    "applicationId",
+    "cvAnalysisId",
+    "rubricVersionId",
+    "cvProfile",
+    "cvText",
+    "job",
+    "requirements",
+    "outputSchemaVersion"
+  ]
+}

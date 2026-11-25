@@ -1,0 +1,74 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000002",
+  "eventType": "ihr.cv.match.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "APPLICATION",
+  "entityId": "2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f60",
+  "payload": {
+    "jobId": "9c1f0002-0000-4000-8000-000000000002",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "cv_match.v1",
+    "applicationId": "2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f60",
+    "cvAnalysisId": "3e4f5a6b-7c8d-4e9f-8a1b-2c3d4e5f6071",
+    "rubricVersionId": "4f5a6b7c-8d9e-4f0a-9b2c-3d4e5f607182",
+    "cvProfile": {
+      "bucket": "ihr-generated-private",
+      "key": "cv/0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10/profile/9c1f0001-0000-4000-8000-000000000001.json",
+      "sha256": "d1e80f2e9600bcd1959dac27116b2bca0b8d8a07c9aaff17cc27c10df8ea2730",
+      "sizeBytes": 2532,
+      "mimeType": "application/json"
+    },
+    "cvText": {
+      "bucket": "ihr-generated-private",
+      "key": "cv/0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10/text/9c1f0001-0000-4000-8000-000000000001.txt",
+      "sha256": "a8d70c5edaa425a72ca92460b9a9e977ec0908d4169513f436e9a6f3d06d104a",
+      "sizeBytes": 645,
+      "mimeType": "text/plain"
+    },
+    "job": {
+      "title": "Java Backend Engineer",
+      "summary": "Build and operate Java services for payment settlement.",
+      "experienceMinMonths": 36,
+      "experienceMaxMonths": 96
+    },
+    "requirements": [
+      {
+        "code": "R1",
+        "category": "SKILL",
+        "text": "Strong Java backend development",
+        "skillName": "Java",
+        "type": "MUST_HAVE",
+        "weight": 3
+      },
+      {
+        "code": "R2",
+        "category": "SKILL",
+        "text": "Event streaming with Apache Kafka",
+        "skillName": "Kafka",
+        "type": "MUST_HAVE",
+        "weight": 3
+      },
+      {
+        "code": "R3",
+        "category": "EXPERIENCE",
+        "text": "At least 3 years of backend experience",
+        "type": "MUST_HAVE",
+        "weight": 3,
+        "minMonths": 36
+      },
+      {
+        "code": "R4",
+        "category": "SKILL",
+        "text": "Experience with AWS",
+        "skillName": "AWS",
+        "type": "PREFERRED",
+        "weight": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+# S-12 / A.1: any change under contracts/ needs both the Platform lead and the AI lead.
+# Replace the placeholder team handles with the real GitHub teams.
+/contracts/                 @ihr/platform-lead @ihr/ai-lead
+/contracts/ai-schemas/      @ihr/ai-lead @ihr/platform-lead
+/services/ihr-ai-worker/    @ihr/ai-team
+/services/ihr-speech-service/ @ihr/ai-team
+/libs/py-worker-common/     @ihr/ai-team @ihr/platform-lead
+/docs/prompts/              @ihr/ai-lead
+/eval/                      @ihr/ai-team

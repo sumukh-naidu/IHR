@@ -1,0 +1,53 @@
+{
+  "scores": [
+    {
+      "competencyCode": "PRACTICAL_EXPERIENCE",
+      "score": 4,
+      "notAssessedReason": null,
+      "confidence": "HIGH",
+      "rationale": "Specific example with own design decisions (keying by merchant, idempotency check) and a stated result; lessons learned are not covered.",
+      "evidence": [
+        {
+          "segmentIndex": 1,
+          "quote": "I designed the topic layout so each merchant's events used the merchant ID as the key"
+        },
+        {
+          "segmentIndex": 3,
+          "quote": "The batch went from about forty minutes to under ten"
+        }
+      ]
+    },
+    {
+      "competencyCode": "LEADERSHIP",
+      "score": 4,
+      "notAssessedReason": null,
+      "confidence": "MEDIUM",
+      "rationale": "Correctly links message keys to per-partition ordering and explains idempotent consumption; alternatives are not discussed.",
+      "evidence": [
+        {
+          "segmentIndex": 1,
+          "quote": "which kept them in order within a partition"
+        },
+        {
+          "segmentIndex": 2,
+          "quote": "I added an idempotency check so a replayed message did not settle twice"
+        }
+      ]
+    }
+  ],
+  "notableEvidence": [
+    {
+      "segmentIndex": 2,
+      "quote": "We had retries on the consumer side",
+      "relatedCompetencyCode": "TECHNICAL_SKILL"
+    }
+  ],
+  "candidateReportedClaims": [
+    {
+      "claim": "Reduced settlement batch time from about forty minutes to under ten",
+      "segmentIndex": 3
+    }
+  ],
+  "answerFlags": [],
+  "uncertainty": []
+}

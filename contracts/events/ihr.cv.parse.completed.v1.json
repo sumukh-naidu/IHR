@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.cv.parse.completed.v1.json",
+  "title": "Payload of ihr.cv.parse.completed (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cvProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "sizeBytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "mimeType": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "bucket",
+            "key",
+            "sha256",
+            "sizeBytes",
+            "mimeType"
+          ]
+        },
+        "cvText": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "sizeBytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "mimeType": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "bucket",
+            "key",
+            "sha256",
+            "sizeBytes",
+            "mimeType"
+          ]
+        }
+      },
+      "required": [
+        "cvProfile",
+        "cvText"
+      ]
+    },
+    "outputSchemaVersion": {
+      "const": "cv_profile.v1"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promptVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promptSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "providerRequestId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "providerAttempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repairAttempted": {
+          "type": "boolean"
+        },
+        "validationStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workerVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "promptId",
+        "promptVersion",
+        "promptSha256",
+        "providerRequestId",
+        "latencyMs",
+        "inputTokens",
+        "outputTokens",
+        "providerAttempts",
+        "repairAttempted",
+        "validationStatus",
+        "workerVersion"
+      ]
+    },
+    "pageCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ocrUsed": {
+      "type": "boolean"
+    },
+    "textChars": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "LOCAL_REGEX",
+                    "LOCAL_HEADER"
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "confidence",
+                "source"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "LOCAL_REGEX",
+                    "LOCAL_HEADER"
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "confidence",
+                "source"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "LOCAL_REGEX",
+                    "LOCAL_HEADER"
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "confidence",
+                "source"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "phone"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "OCR_USED",
+          "OCR_PARTIAL",
+          "LOW_OCR_CONFIDENCE",
+          "TEXT_TRUNCATED",
+          "EXTENSION_MISMATCH",
+          "MULTI_COLUMN_LAYOUT",
+          "PROMPT_INJECTION_SUSPECTED",
+          "NON_ENGLISH_CONTENT",
+          "DATES_AMBIGUOUS",
+          "NO_EMPLOYMENT_HISTORY",
+          "NO_SKILLS_FOUND",
+          "ENCRYPTED_DOCUMENT",
+          "TEXT_GARBLED",
+          "MULTIPLE_PEOPLE_DESCRIBED",
+          "NOT_A_CV"
+        ]
+      }
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "output",
+    "outputSchemaVersion",
+    "run",
+    "pageCount",
+    "ocrUsed",
+    "textChars",
+    "identity",
+    "warnings"
+  ]
+}

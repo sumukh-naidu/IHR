@@ -1,0 +1,44 @@
+# AI-team services in mock mode (Appendix A.8), to be included in the Platform team's
+# compose stack, which provides Kafka and SeaweedFS (S-03 LOCAL/DEV). Set
+# KAFKA_BOOTSTRAP_SERVERS / S3_* to that stack's values.
+x-common-env: &common-env
+  KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+  S3_INTERNAL_ENDPOINT: ${S3_INTERNAL_ENDPOINT:-http://seaweedfs:8333}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-dev}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-dev}
+  S3_REGION: ${S3_REGION:-us-east-1}
+  S3_BUCKET_GENERATED: ihr-generated-private
+
+services:
+  ihr-ai-worker:
+    build: { context: ../.., dockerfile: services/ihr-ai-worker/Dockerfile }
+    environment:
+      <<: *common-env
+      WORKER_ROLE: standard
+      AI_PROVIDER: mock
+      MOCK_FAILURE_RATE: ${MOCK_FAILURE_RATE:-0}
+      KIMI_MAX_CONCURRENCY: 8
+
+  ihr-ai-worker-realtime:
+    build: { context: ../.., dockerfile: services/ihr-ai-worker/Dockerfile }
+    environment:
+      <<: *common-env
+      WORKER_ROLE: realtime
+      AI_PROVIDER: mock
+      MOCK_FAILURE_RATE: ${MOCK_FAILURE_RATE:-0}
+      KIMI_MAX_CONCURRENCY: 4
+
+  ihr-speech-stt:
+    build: { context: ../.., dockerfile: services/ihr-speech-service/Dockerfile }
+    environment:
+      <<: *common-env
+      WORKER_ROLE: stt
+      STT_PROVIDER: mock
+
+  ihr-speech-tts:
+    build: { context: ../.., dockerfile: services/ihr-speech-service/Dockerfile }
+    environment:
+      <<: *common-env
+      WORKER_ROLE: tts
+      TTS_PROVIDER_PRIMARY: mock
+      TTS_PROVIDER_SECONDARY: mock

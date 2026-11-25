@@ -1,0 +1,23 @@
+{
+  "pageCount": 1,
+  "ocrUsed": false,
+  "textChars": 645,
+  "identity": {
+    "name": {
+      "value": "Asha Verma",
+      "confidence": 0.6,
+      "source": "LOCAL_HEADER"
+    },
+    "email": {
+      "value": "asha.verma@example.com",
+      "confidence": 1.0,
+      "source": "LOCAL_REGEX"
+    },
+    "phone": {
+      "value": "+919876543210",
+      "confidence": 1.0,
+      "source": "LOCAL_REGEX"
+    }
+  },
+  "warnings": []
+}

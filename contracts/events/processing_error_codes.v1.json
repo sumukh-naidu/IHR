@@ -1,0 +1,74 @@
+{
+  "DEADLINE_EXCEEDED": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  },
+  "PROVIDER_TIMEOUT": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  },
+  "PROVIDER_RATE_LIMITED": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  },
+  "PROVIDER_UNAVAILABLE": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  },
+  "STORAGE_UNAVAILABLE": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  },
+  "INPUT_NOT_FOUND": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INPUT_CHECKSUM_MISMATCH": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INPUT_UNSUPPORTED_FORMAT": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INPUT_TOO_LARGE": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INPUT_MALWARE_DETECTED": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INPUT_NO_TEXT": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "OUTPUT_SCHEMA_INVALID": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "OUTPUT_SEMANTIC_INVALID": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "OUTPUT_POLICY_VIOLATION": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "MEDIA_CHUNKS_MISSING": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "MEDIA_CORRUPT": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "UNSUPPORTED_SCHEMA_VERSION": {
+    "errorClass": "PERMANENT",
+    "retryable": false
+  },
+  "INTERNAL_ERROR": {
+    "errorClass": "TRANSIENT",
+    "retryable": true
+  }
+}

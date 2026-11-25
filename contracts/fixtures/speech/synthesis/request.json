@@ -1,0 +1,23 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000008",
+  "eventType": "ihr.speech.synthesis.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "TTS_TEXT",
+  "entityId": "79491119a8f5e41be5a4001803f3da8f567466eee821cf92a03e95295401e715",
+  "payload": {
+    "jobId": "9c1f0008-0000-4000-8000-000000000008",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "tts_audio.v1",
+    "interviewId": null,
+    "turnId": null,
+    "purpose": "QUESTION",
+    "text": "Tell me about a project you worked on that is relevant to this role.",
+    "voiceProfileKey": "en-default",
+    "cacheKey": "79491119a8f5e41be5a4001803f3da8f567466eee821cf92a03e95295401e715"
+  }
+}

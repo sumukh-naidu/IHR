@@ -1,0 +1,32 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000001",
+  "eventType": "ihr.cv.parse.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "CANDIDATE_DOCUMENT",
+  "entityId": "0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10",
+  "payload": {
+    "jobId": "9c1f0001-0000-4000-8000-000000000001",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "cv_profile.v1",
+    "documentId": "0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10",
+    "candidateId": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+    "document": {
+      "bucket": "ihr-candidate-private",
+      "key": "candidate/1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f/documents/0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10/original",
+      "sha256": "eba4483b62e2ebc8990afaae93dd061f6a2d35f490a0aa11d9229c721c00bf60",
+      "sizeBytes": 19,
+      "mimeType": "application/pdf"
+    },
+    "originalExtension": "pdf",
+    "redactionHints": {
+      "fullName": "Asha Verma",
+      "email": "asha.verma@example.com",
+      "phone": "+91 98765 43210"
+    }
+  }
+}

@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/ai-schemas/final_report.v1.json",
+  "title": "final_report.v1 (chapter 7)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "summary": {
+      "type": "string",
+      "maxLength": 1200,
+      "minLength": 100
+    },
+    "competencyNarratives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "competencyCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "narrative": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 20
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "turn": {
+                  "type": "string",
+                  "pattern": "^T[1-9]\\d*$"
+                },
+                "segmentIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "segmentIndex"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 4
+          }
+        },
+        "required": [
+          "competencyCode",
+          "narrative",
+          "evidenceRefs"
+        ]
+      },
+      "minItems": 1
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "turn": {
+                  "type": "string",
+                  "pattern": "^T[1-9]\\d*$"
+                },
+                "segmentIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "segmentIndex"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "text",
+          "evidenceRefs"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 5
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "turn": {
+                  "type": "string",
+                  "pattern": "^T[1-9]\\d*$"
+                },
+                "segmentIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "segmentIndex"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "text",
+          "evidenceRefs"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 5
+    },
+    "reviewerFocusAreas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 250
+      },
+      "minItems": 1,
+      "maxItems": 5
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 250
+      },
+      "minItems": 0,
+      "maxItems": 6
+    },
+    "computedScores": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "competencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "score": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1.0,
+                    "maximum": 5.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "assessedTurnCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "code",
+              "score",
+              "assessedTurnCount"
+            ]
+          }
+        },
+        "overallScore": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completionState": {
+          "type": "string",
+          "enum": [
+            "COMPLETE",
+            "INCOMPLETE"
+          ]
+        },
+        "evidenceLevel": {
+          "type": "string",
+          "enum": [
+            "STRONG_EVIDENCE",
+            "MODERATE_EVIDENCE",
+            "LIMITED_EVIDENCE",
+            "INSUFFICIENT_EVIDENCE"
+          ]
+        }
+      },
+      "required": [
+        "competencies",
+        "overallScore",
+        "completionState",
+        "evidenceLevel"
+      ]
+    }
+  },
+  "required": [
+    "summary",
+    "competencyNarratives",
+    "strengths",
+    "gaps",
+    "reviewerFocusAreas",
+    "limitations",
+    "computedScores"
+  ],
+  "$defs": {
+    "ModelOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "maxLength": 1200,
+          "minLength": 100
+        },
+        "competencyNarratives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "competencyCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "narrative": {
+                "type": "string",
+                "maxLength": 600,
+                "minLength": 20
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "turn": {
+                      "type": "string",
+                      "pattern": "^T[1-9]\\d*$"
+                    },
+                    "segmentIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "turn",
+                    "segmentIndex"
+                  ]
+                },
+                "minItems": 0,
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "competencyCode",
+              "narrative",
+              "evidenceRefs"
+            ]
+          },
+          "minItems": 1
+        },
+        "strengths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 250
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "turn": {
+                      "type": "string",
+                      "pattern": "^T[1-9]\\d*$"
+                    },
+                    "segmentIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "turn",
+                    "segmentIndex"
+                  ]
+                },
+                "minItems": 0,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "text",
+              "evidenceRefs"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 5
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 250
+              },
+              "evidenceRefs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "turn": {
+                      "type": "string",
+                      "pattern": "^T[1-9]\\d*$"
+                    },
+                    "segmentIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "turn",
+                    "segmentIndex"
+                  ]
+                },
+                "minItems": 0,
+                "maxItems": 3
+              }
+            },
+            "required": [
+              "text",
+              "evidenceRefs"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 5
+        },
+        "reviewerFocusAreas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "minItems": 1,
+          "maxItems": 5
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "minItems": 0,
+          "maxItems": 6
+        }
+      },
+      "required": [
+        "summary",
+        "competencyNarratives",
+        "strengths",
+        "gaps",
+        "reviewerFocusAreas",
+        "limitations"
+      ]
+    }
+  }
+}

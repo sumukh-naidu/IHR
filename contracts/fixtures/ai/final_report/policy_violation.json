@@ -1,0 +1,67 @@
+{
+  "summary": "The interview evidence shows practical experience designing Kafka-based settlement pipelines with clear ownership and a stated outcome, and correct explanations of partition ordering and idempotent consumption. Problem-solving answers followed logical steps. Role fit was not assessed. Technical skill scored 3.7 out of 5; the candidate is not suitable for a senior role.",
+  "competencyNarratives": [
+    {
+      "competencyCode": "TECHNICAL_SKILL",
+      "narrative": "Explained that message keys keep related events ordered within a partition and described an idempotency check for replays (T1 [1], T1 [2]).",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 1
+        },
+        {
+          "turn": "T1",
+          "segmentIndex": 2
+        }
+      ]
+    },
+    {
+      "competencyCode": "PROBLEM_SOLVING",
+      "narrative": "Answers described logical investigation steps; option comparison was limited.",
+      "evidenceRefs": []
+    },
+    {
+      "competencyCode": "PRACTICAL_EXPERIENCE",
+      "narrative": "Gave a specific example with own design decisions and a stated reduction in batch time (T1 [3]).",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 3
+        }
+      ]
+    },
+    {
+      "competencyCode": "COMMUNICATION",
+      "narrative": "Answers were relevant to the questions and followed a clear structure.",
+      "evidenceRefs": []
+    },
+    {
+      "competencyCode": "ROLE_FIT",
+      "narrative": "No answer in this interview provided evidence for this competency.",
+      "evidenceRefs": []
+    }
+  ],
+  "strengths": [
+    {
+      "text": "Specific example of designing Kafka event pipelines with own decisions",
+      "evidenceRefs": [
+        {
+          "turn": "T1",
+          "segmentIndex": 1
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "text": "Limited evidence of comparing alternative designs",
+      "evidenceRefs": []
+    }
+  ],
+  "reviewerFocusAreas": [
+    "Explore how alternative designs were evaluated for the settlement pipeline"
+  ],
+  "limitations": [
+    "Role fit was not assessed in this interview."
+  ]
+}

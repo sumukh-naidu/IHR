@@ -1,0 +1,10 @@
+{
+  "decision": "ASK_FOLLOW_UP",
+  "reasonCode": "PROBE_DEPTH",
+  "followUp": {
+    "text": "Did you really design this yourself, or was it your team lead?",
+    "competencyCodes": [
+      "TECHNICAL_SKILL"
+    ]
+  }
+}

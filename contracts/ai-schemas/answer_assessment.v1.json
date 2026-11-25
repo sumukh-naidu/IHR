@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/ai-schemas/answer_assessment.v1.json",
+  "title": "answer_assessment.v1 (chapter 7)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "competencyCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notAssessedReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "NO_RELEVANT_CONTENT",
+                  "ANSWER_TOO_SHORT",
+                  "NO_SPEECH",
+                  "OFF_TOPIC"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 20
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "segmentIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "quote": {
+                  "type": "string",
+                  "maxLength": 300,
+                  "minLength": 8
+                }
+              },
+              "required": [
+                "segmentIndex",
+                "quote"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "competencyCode",
+          "score",
+          "notAssessedReason",
+          "confidence",
+          "rationale",
+          "evidence"
+        ]
+      }
+    },
+    "notableEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "segmentIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 8
+          },
+          "relatedCompetencyCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "segmentIndex",
+          "quote",
+          "relatedCompetencyCode"
+        ]
+      },
+      "maxItems": 3
+    },
+    "candidateReportedClaims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "segmentIndex": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "claim",
+          "segmentIndex"
+        ]
+      },
+      "maxItems": 5
+    },
+    "answerFlags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "ANSWER_TOO_SHORT",
+          "OFF_TOPIC",
+          "NO_SUBSTANTIVE_ANSWER",
+          "LIKELY_TRANSCRIPTION_ISSUE",
+          "CANDIDATE_REPORTED_TECHNICAL_ISSUE",
+          "CANDIDATE_DECLINED_TO_ANSWER",
+          "PROMPT_INJECTION_SUSPECTED"
+        ]
+      }
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 3
+    }
+  },
+  "required": [
+    "scores",
+    "notableEvidence",
+    "candidateReportedClaims",
+    "answerFlags",
+    "uncertainty"
+  ]
+}

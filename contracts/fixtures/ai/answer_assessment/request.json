@@ -1,0 +1,84 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000005",
+  "eventType": "ihr.interview.answer-assessment.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "INTERVIEW_TURN",
+  "entityId": "b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d",
+  "payload": {
+    "jobId": "9c1f0005-0000-4000-8000-000000000005",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "answer_assessment.v1",
+    "interviewId": "6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b",
+    "turnId": "b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d",
+    "turnKind": "MAIN",
+    "redactionHints": {
+      "fullName": "Asha Verma",
+      "email": "asha.verma@example.com",
+      "phone": "+91 98765 43210"
+    },
+    "question": {
+      "text": "You mention designing event pipelines on Apache Kafka for settlement batches. Walk me through your own role in that work and the result.",
+      "competencyCodes": [
+        "PRACTICAL_EXPERIENCE",
+        "TECHNICAL_SKILL"
+      ],
+      "expectedAnswerRubric": {
+        "keyPoints": [
+          "Describes the pipeline's purpose",
+          "States own decisions and actions",
+          "Describes the outcome or impact"
+        ],
+        "strongSignals": [
+          "Names concrete design choices and why"
+        ],
+        "weakSignals": [
+          "Describes only team work without own role"
+        ]
+      }
+    },
+    "competencies": [
+      {
+        "code": "TECHNICAL_SKILL",
+        "name": "Technical skill",
+        "description": "Depth and accuracy of technical knowledge",
+        "anchors": {
+          "1": "Incorrect or no relevant technical content",
+          "2": "Recognises terms but explanation is vague or partly incorrect",
+          "3": "Correct explanation of core concepts with a basic example",
+          "4": "Correct, specific explanation with trade-offs or real usage",
+          "5": "Deep, precise explanation covering edge cases, alternatives and when not to use it"
+        }
+      },
+      {
+        "code": "PRACTICAL_EXPERIENCE",
+        "name": "Practical experience",
+        "description": "Concrete, owned work examples",
+        "anchors": {
+          "1": "No concrete example",
+          "2": "Generic example without own role or detail",
+          "3": "Concrete example with own role described",
+          "4": "Specific example with own decisions, actions and results",
+          "5": "Detailed example with ownership, measurable outcome and lessons learned"
+        }
+      }
+    ],
+    "transcript": {
+      "bucket": "ihr-generated-private",
+      "key": "interview/6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b/transcripts/b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d/9c1f0010-0000-4000-8000-000000000010.json",
+      "sha256": "a7910c3799926f3bb3e89425836c6f837040aa323ab00c1372c24fae88c87c63",
+      "sizeBytes": 1079,
+      "mimeType": "application/json"
+    },
+    "transcriptQuality": {
+      "avgConfidence": 0.86,
+      "speechDetected": true,
+      "qualityFlags": []
+    },
+    "priorContext": []
+  }
+}

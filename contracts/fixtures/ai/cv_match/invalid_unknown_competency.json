@@ -1,0 +1,59 @@
+{
+  "criteria": [
+    {
+      "requirementCode": "R9",
+      "status": "MATCHED",
+      "evidence": [
+        {
+          "quote": "Developed REST APIs in Java 11"
+        },
+        {
+          "quote": "Built Spring Boot services for card settlement"
+        }
+      ],
+      "rationale": "Two roles describe Java backend services and REST APIs.",
+      "confidence": "HIGH"
+    },
+    {
+      "requirementCode": "R2",
+      "status": "MATCHED",
+      "evidence": [
+        {
+          "quote": "event pipelines on Apache Kafka"
+        }
+      ],
+      "rationale": "The current role describes designing Kafka event pipelines.",
+      "confidence": "HIGH"
+    },
+    {
+      "requirementCode": "R3",
+      "status": "MATCHED",
+      "evidence": [
+        {
+          "quote": "Software Engineer | Jul 2018 - Mar 2022"
+        }
+      ],
+      "rationale": "Employment dates indicate several years of backend work.",
+      "confidence": "MEDIUM"
+    },
+    {
+      "requirementCode": "R4",
+      "status": "MISSING",
+      "evidence": [],
+      "rationale": "The CV lists skills and roles in detail and does not mention AWS.",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "summary": "The CV shows Java backend and Kafka event-streaming work in payments over two roles. No AWS experience is stated.",
+  "strengths": [
+    "Java backend services in two roles",
+    "Kafka event pipelines in the current role"
+  ],
+  "gaps": [
+    "No stated AWS experience"
+  ],
+  "clarificationQuestions": [
+    "Which cloud platforms have you deployed services to?"
+  ],
+  "warnings": []
+}

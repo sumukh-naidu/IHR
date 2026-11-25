@@ -1,0 +1,136 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000003",
+  "eventType": "ihr.interview.plan.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "INTERVIEW",
+  "entityId": "6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b",
+  "payload": {
+    "jobId": "9c1f0003-0000-4000-8000-000000000003",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "interview_plan.v1",
+    "interviewId": "6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b",
+    "rubricVersionId": "4f5a6b7c-8d9e-4f0a-9b2c-3d4e5f607182",
+    "templateVersionId": "5a6b7c8d-9e0f-4a1b-8c3d-4e5f60718293",
+    "planMode": "BASELINE",
+    "mainQuestionCount": 6,
+    "maxAnswerSeconds": 180,
+    "competencies": [
+      {
+        "code": "TECHNICAL_SKILL",
+        "name": "Technical skill",
+        "description": "Depth and accuracy of technical knowledge",
+        "weight": 40,
+        "mandatory": true,
+        "anchors": {
+          "1": "Incorrect or no relevant technical content",
+          "2": "Recognises terms but explanation is vague or partly incorrect",
+          "3": "Correct explanation of core concepts with a basic example",
+          "4": "Correct, specific explanation with trade-offs or real usage",
+          "5": "Deep, precise explanation covering edge cases, alternatives and when not to use it"
+        },
+        "fallbackQuestions": [
+          "Choose one of the main technologies listed for this role that you have used. Explain how it works and when you would not use it.",
+          "Describe a technical decision you made recently, the options you considered and why you chose one.",
+          "Explain a concept from this role's core skills to a new team member, including a common mistake people make."
+        ]
+      },
+      {
+        "code": "PROBLEM_SOLVING",
+        "name": "Problem solving",
+        "description": "Approach to analysing and solving problems",
+        "weight": 20,
+        "mandatory": true,
+        "anchors": {
+          "1": "No approach offered",
+          "2": "Jumps to a solution without reasoning",
+          "3": "Logical steps to a workable solution",
+          "4": "Clear steps, states assumptions, compares options",
+          "5": "Structured approach with assumptions, trade-offs, validation and risk handling"
+        },
+        "fallbackQuestions": [
+          "Describe how you would investigate a problem where a system that worked yesterday is failing today.",
+          "Tell me about a difficult problem you solved. How did you break it down and check your solution?",
+          "If you had two possible solutions and limited time, how would you decide between them?"
+        ]
+      },
+      {
+        "code": "PRACTICAL_EXPERIENCE",
+        "name": "Practical experience",
+        "description": "Concrete, owned work examples",
+        "weight": 20,
+        "mandatory": true,
+        "anchors": {
+          "1": "No concrete example",
+          "2": "Generic example without own role or detail",
+          "3": "Concrete example with own role described",
+          "4": "Specific example with own decisions, actions and results",
+          "5": "Detailed example with ownership, measurable outcome and lessons learned"
+        },
+        "fallbackQuestions": [
+          "Describe a project you worked on that is relevant to this role. What was your own contribution and what was the result?",
+          "Tell me about something you delivered that did not go as planned. What did you do?",
+          "Describe a piece of work you are proud of and the steps you took to complete it."
+        ]
+      },
+      {
+        "code": "COMMUNICATION",
+        "name": "Communication",
+        "description": "Relevance, structure and clarity of content",
+        "weight": 10,
+        "mandatory": false,
+        "anchors": {
+          "1": "Answer does not address the question",
+          "2": "Partly relevant, hard to follow",
+          "3": "Relevant and understandable",
+          "4": "Relevant, well structured, clear",
+          "5": "Concise, well structured, tailored to the question, easy to follow"
+        },
+        "fallbackQuestions": [
+          "How would you explain a recent piece of your work to someone without a technical background?",
+          "Describe how you keep others informed when a task you own is delayed."
+        ]
+      },
+      {
+        "code": "ROLE_FIT",
+        "name": "Role fit",
+        "description": "Link between experience and the role's requirements",
+        "weight": 10,
+        "mandatory": false,
+        "anchors": {
+          "1": "No connection to the role's requirements",
+          "2": "Weak link to the role",
+          "3": "Links experience to some requirements",
+          "4": "Clear link to most must-have requirements",
+          "5": "Clear, specific link to must-have and preferred requirements with examples"
+        },
+        "fallbackQuestions": [
+          "Which parts of this role's requirements match your experience most closely? Give an example.",
+          "What would you need to learn or improve to be effective in this role in the first three months?"
+        ]
+      }
+    ],
+    "job": {
+      "title": "Java Backend Engineer",
+      "summary": "Build and operate Java services for payment settlement.",
+      "mustHaveSkills": [
+        "Java",
+        "Kafka"
+      ],
+      "preferredSkills": [
+        "AWS"
+      ]
+    },
+    "cvProfile": {
+      "bucket": "ihr-generated-private",
+      "key": "cv/0b8c3f1e-6a41-4a8e-9a0e-2b4c0d6c1f10/profile/9c1f0001-0000-4000-8000-000000000001.json",
+      "sha256": "d1e80f2e9600bcd1959dac27116b2bca0b8d8a07c9aaff17cc27c10df8ea2730",
+      "sizeBytes": 2532,
+      "mimeType": "application/json"
+    }
+  }
+}

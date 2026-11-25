@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/ai-schemas/cv_match.v1.json",
+  "title": "cv_match.v1 (chapter 7)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirementCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "MATCHED",
+              "PARTIAL",
+              "MISSING",
+              "UNKNOWN"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "quote": {
+                  "type": "string",
+                  "maxLength": 300,
+                  "minLength": 8
+                }
+              },
+              "required": [
+                "quote"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          },
+          "rationale": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ]
+          },
+          "statusSource": {
+            "type": "string",
+            "enum": [
+              "MODEL",
+              "DETERMINISTIC_EXPERIENCE"
+            ]
+          }
+        },
+        "required": [
+          "requirementCode",
+          "status",
+          "evidence",
+          "rationale",
+          "confidence",
+          "statusSource"
+        ]
+      },
+      "minItems": 1
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 800
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 5
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 5
+    },
+    "clarificationQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 5
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CV_SPARSE",
+          "CV_TEXT_TRUNCATED",
+          "PROMPT_INJECTION_SUSPECTED",
+          "NON_ENGLISH_CONTENT"
+        ]
+      }
+    }
+  },
+  "required": [
+    "criteria",
+    "summary",
+    "strengths",
+    "gaps",
+    "clarificationQuestions",
+    "warnings"
+  ],
+  "$defs": {
+    "ModelOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "requirementCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "MATCHED",
+                  "PARTIAL",
+                  "MISSING",
+                  "UNKNOWN"
+                ]
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "quote": {
+                      "type": "string",
+                      "maxLength": 300,
+                      "minLength": 8
+                    }
+                  },
+                  "required": [
+                    "quote"
+                  ]
+                },
+                "minItems": 0,
+                "maxItems": 3
+              },
+              "rationale": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH"
+                ]
+              }
+            },
+            "required": [
+              "requirementCode",
+              "status",
+              "evidence",
+              "rationale",
+              "confidence"
+            ]
+          },
+          "minItems": 1
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 800
+        },
+        "strengths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 5
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "maxItems": 5
+        },
+        "clarificationQuestions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "maxItems": 5
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CV_SPARSE",
+              "CV_TEXT_TRUNCATED",
+              "PROMPT_INJECTION_SUSPECTED",
+              "NON_ENGLISH_CONTENT"
+            ]
+          }
+        }
+      },
+      "required": [
+        "criteria",
+        "summary",
+        "strengths",
+        "gaps",
+        "clarificationQuestions",
+        "warnings"
+      ]
+    }
+  }
+}

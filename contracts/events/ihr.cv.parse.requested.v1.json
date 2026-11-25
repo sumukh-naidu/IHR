@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.cv.parse.requested.v1.json",
+  "title": "Payload of ihr.cv.parse.requested (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deadlineAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "documentId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "candidateId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "sha256",
+        "sizeBytes",
+        "mimeType"
+      ]
+    },
+    "originalExtension": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "docx",
+        "doc"
+      ]
+    },
+    "redactionHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fullName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "fullName",
+        "email",
+        "phone"
+      ]
+    },
+    "outputSchemaVersion": {
+      "const": "cv_profile.v1"
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "deadlineAt",
+    "documentId",
+    "candidateId",
+    "document",
+    "originalExtension",
+    "redactionHints",
+    "outputSchemaVersion"
+  ]
+}

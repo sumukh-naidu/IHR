@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.speech.synthesis.failed.v1.json",
+  "title": "Payload of ihr.speech.synthesis.failed (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "errorCode": {
+      "type": "string",
+      "enum": [
+        "DEADLINE_EXCEEDED",
+        "PROVIDER_TIMEOUT",
+        "PROVIDER_RATE_LIMITED",
+        "PROVIDER_UNAVAILABLE",
+        "STORAGE_UNAVAILABLE",
+        "INPUT_NOT_FOUND",
+        "INPUT_CHECKSUM_MISMATCH",
+        "INPUT_UNSUPPORTED_FORMAT",
+        "INPUT_TOO_LARGE",
+        "INPUT_MALWARE_DETECTED",
+        "INPUT_NO_TEXT",
+        "OUTPUT_SCHEMA_INVALID",
+        "OUTPUT_SEMANTIC_INVALID",
+        "OUTPUT_POLICY_VIOLATION",
+        "MEDIA_CHUNKS_MISSING",
+        "MEDIA_CORRUPT",
+        "UNSUPPORTED_SCHEMA_VERSION",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "errorClass": {
+      "type": "string",
+      "enum": [
+        "TRANSIENT",
+        "PERMANENT"
+      ]
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "run": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "promptId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "promptVersion": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "promptSha256": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "providerRequestId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "latencyMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "inputTokens": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "outputTokens": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "providerAttempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "repairAttempted": {
+              "type": "boolean"
+            },
+            "validationStatus": {
+              "type": "string",
+              "minLength": 1
+            },
+            "workerVersion": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "provider",
+            "model",
+            "promptId",
+            "promptVersion",
+            "promptSha256",
+            "providerRequestId",
+            "latencyMs",
+            "inputTokens",
+            "outputTokens",
+            "providerAttempts",
+            "repairAttempted",
+            "validationStatus",
+            "workerVersion"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "errorCode",
+    "errorClass",
+    "retryable",
+    "message",
+    "run"
+  ]
+}

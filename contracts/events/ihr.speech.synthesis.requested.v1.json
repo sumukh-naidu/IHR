@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.speech.synthesis.requested.v1.json",
+  "title": "Payload of ihr.speech.synthesis.requested (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deadlineAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "interviewId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "turnId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "OPENING",
+        "WARMUP",
+        "QUESTION",
+        "FOLLOW_UP",
+        "CLOSING",
+        "SYSTEM_MESSAGE"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 600,
+      "minLength": 1
+    },
+    "voiceProfileKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cacheKey": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "outputSchemaVersion": {
+      "const": "tts_audio.v1"
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "deadlineAt",
+    "interviewId",
+    "turnId",
+    "purpose",
+    "text",
+    "voiceProfileKey",
+    "cacheKey",
+    "outputSchemaVersion"
+  ]
+}

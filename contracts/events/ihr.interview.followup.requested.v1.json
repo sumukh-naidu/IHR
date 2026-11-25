@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/ihr.interview.followup.requested.v1.json",
+  "title": "Payload of ihr.interview.followup.requested (A.5)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "deadlineAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "interviewId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "turnId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "mainTurnId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "redactionHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fullName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "fullName",
+        "email",
+        "phone"
+      ]
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 300,
+          "minLength": 1
+        },
+        "competencyCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "expectedAnswerRubric": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "keyPoints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "strongSignals": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "weakSignals": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "keyPoints",
+            "strongSignals",
+            "weakSignals"
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "competencyCodes",
+        "expectedAnswerRubric"
+      ]
+    },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mimeType": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "bucket",
+        "key",
+        "sha256",
+        "sizeBytes",
+        "mimeType"
+      ]
+    },
+    "outputSchemaVersion": {
+      "const": "followup_decision.v1"
+    }
+  },
+  "required": [
+    "jobId",
+    "attempt",
+    "deadlineAt",
+    "interviewId",
+    "turnId",
+    "mainTurnId",
+    "redactionHints",
+    "question",
+    "transcript",
+    "outputSchemaVersion"
+  ]
+}

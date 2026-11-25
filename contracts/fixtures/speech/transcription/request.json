@@ -1,0 +1,33 @@
+{
+  "eventId": "0192f000-0000-7000-8000-000000000007",
+  "eventType": "ihr.speech.transcription.requested",
+  "eventVersion": 1,
+  "occurredAt": "2026-12-02T09:36:49.120Z",
+  "correlationId": "8f2a6c1d9b3e4f5a8f2a6c1d9b3e4f5a",
+  "causationId": null,
+  "producer": "ihr-core-api",
+  "entityType": "INTERVIEW_TURN",
+  "entityId": "b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d",
+  "payload": {
+    "jobId": "9c1f0007-0000-4000-8000-000000000007",
+    "attempt": 1,
+    "deadlineAt": "2099-01-01T00:00:00.000Z",
+    "outputSchemaVersion": "transcript.v1",
+    "interviewId": "6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b",
+    "turnId": "b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d",
+    "audio": {
+      "bucket": "ihr-interview-raw",
+      "key": "interview/6de6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b/answers/b7e1c2d3-e4f5-4a6b-8c7d-8e9f0a1b2c3d/audio",
+      "sha256": "ef746a1a59afecba50d3ce36e3506ee52784236e91034569ccb54f73fbc3c632",
+      "sizeBytes": 15,
+      "mimeType": "audio/webm"
+    },
+    "language": "en",
+    "vocabularyHints": [
+      "Kafka",
+      "Spring Boot",
+      "PostgreSQL"
+    ],
+    "maxDurationSeconds": 400
+  }
+}

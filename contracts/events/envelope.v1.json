@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/events/envelope.v1.json",
+  "title": "Event envelope (A.2)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "eventType": {
+      "type": "string",
+      "pattern": "^ihr\\.[a-z0-9.\\-]+$"
+    },
+    "eventVersion": {
+      "const": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causationId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "producer": {
+      "type": "string",
+      "enum": [
+        "ihr-core-api",
+        "ihr-ai-worker",
+        "ihr-speech-service",
+        "ihr-media-worker"
+      ]
+    },
+    "entityType": {
+      "type": "string",
+      "enum": [
+        "CANDIDATE_DOCUMENT",
+        "APPLICATION",
+        "INTERVIEW",
+        "INTERVIEW_TURN",
+        "MEDIA_ASSET",
+        "TTS_TEXT"
+      ]
+    },
+    "entityId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "occurredAt",
+    "correlationId",
+    "causationId",
+    "producer",
+    "entityType",
+    "entityId",
+    "payload"
+  ]
+}

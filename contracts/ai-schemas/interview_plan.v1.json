@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ihr.internal/contracts/ai-schemas/interview_plan.v1.json",
+  "title": "interview_plan.v1 (chapter 7)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "pattern": "^q([1-9]|10)$"
+          },
+          "slot": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 20
+          },
+          "competencyCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 2
+          },
+          "questionType": {
+            "type": "string",
+            "enum": [
+              "TECHNICAL_CONCEPT",
+              "SCENARIO",
+              "PAST_EXPERIENCE",
+              "PROBLEM_SOLVING",
+              "ROLE_MOTIVATION"
+            ]
+          },
+          "expectedAnswerRubric": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "keyPoints": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "minItems": 3,
+                "maxItems": 6
+              },
+              "strongSignals": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "maxItems": 4
+              },
+              "weakSignals": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "maxItems": 4
+              }
+            },
+            "required": [
+              "keyPoints",
+              "strongSignals",
+              "weakSignals"
+            ]
+          },
+          "timeBudgetSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 360
+          },
+          "cvAnchor": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "claim": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "quote": {
+                    "type": "string",
+                    "maxLength": 300,
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "claim",
+                  "quote"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "AI_GENERATED",
+              "FALLBACK_BANK"
+            ]
+          }
+        },
+        "required": [
+          "questionId",
+          "slot",
+          "text",
+          "competencyCodes",
+          "questionType",
+          "expectedAnswerRubric",
+          "timeBudgetSeconds",
+          "cvAnchor",
+          "source"
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 10
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^q([1-9]|10)$"
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "QUESTIONS_REPLACED_BY_FALLBACK",
+          "CV_CONTEXT_MISSING"
+        ]
+      }
+    }
+  },
+  "required": [
+    "questions",
+    "coverage",
+    "warnings"
+  ],
+  "$defs": {
+    "ModelOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "slot": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 300,
+                "minLength": 20
+              },
+              "competencyCodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "maxItems": 2
+              },
+              "questionType": {
+                "type": "string",
+                "enum": [
+                  "TECHNICAL_CONCEPT",
+                  "SCENARIO",
+                  "PAST_EXPERIENCE",
+                  "PROBLEM_SOLVING",
+                  "ROLE_MOTIVATION"
+                ]
+              },
+              "expectedAnswerRubric": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "keyPoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "minItems": 3,
+                    "maxItems": 6
+                  },
+                  "strongSignals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "weakSignals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  }
+                },
+                "required": [
+                  "keyPoints",
+                  "strongSignals",
+                  "weakSignals"
+                ]
+              },
+              "timeBudgetSeconds": {
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 360
+              },
+              "cvAnchor": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "claim": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "quote": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "minLength": 8
+                      }
+                    },
+                    "required": [
+                      "claim",
+                      "quote"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "slot",
+              "text",
+              "competencyCodes",
+              "questionType",
+              "expectedAnswerRubric",
+              "timeBudgetSeconds",
+              "cvAnchor"
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "questions"
+      ]
+    }
+  }
+}
