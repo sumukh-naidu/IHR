@@ -21,7 +21,9 @@ def normalise_pages(pages: list[str]) -> list[str]:
         counts = Counter()
         for p in cleaned:
             counts.update({ln for ln in p.split("\n") if ln})
-        repeated = {ln for ln, n in counts.items() if n >= len(cleaned) / 2}
+        # a header/footer repeats: on >= 50 % of pages AND on at least 2 pages (on a 2-page document "50 %" alone
+        # would be every line of either page)
+        repeated = {ln for ln, n in counts.items() if n >= max(2, len(cleaned) / 2)}
         cleaned = ["\n".join(ln for ln in p.split("\n") if ln not in repeated) for p in cleaned]
     return [re.sub(r"\n{3,}", "\n\n", p).strip("\n") for p in cleaned]
 

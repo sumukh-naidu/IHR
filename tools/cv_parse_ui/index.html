@@ -664,7 +664,7 @@ function liveRender(){
       <div style="margin-top:4px"><span class="muted">AI:</span> ${esc((t.q || {}).text || "")}</div>
       <div style="margin-top:4px"><span class="muted">Candidate (STT):</span> ${esc(t.answer || "")}</div>
       <div style="margin-top:4px"><span class="muted">Follow-up decision:</span> ${esc(t.decision || (t.kind === "MAIN" ? "…" : "—"))}</div>
-      <div style="margin-top:4px"><span class="muted">Assessment:</span> ${esc(t.scores || "running…")}</div>
+      <div style="margin-top:4px"><span class="muted">Assessment:</span> ${esc(t.scores || "scored after the interview ends")}</div>
     </div>`).join("");
   const pend = live.pendingQ ? `<div style="border-top:1px solid var(--line);padding:8px 0"><span class="muted">AI is asking (${esc(live.pendingQ.kind)}):</span> ${esc(live.pendingQ.text)}<br><span class="muted">${live.partial ? "Hearing: </span>" + esc(live.partial) + " <span class='muted'>(keep going — it waits for a pause)</span>" : "… listening</span>"}</div>` : "";
   const fin = live.finishing ? `<div class="banner" style="margin-top:8px">Interview finished: waiting for the last assessments and FINAL_REPORT…</div>` : "";

@@ -54,6 +54,8 @@ BARGE_IN = os.environ.get("LIVE_BARGE_IN", "0") == "1"          # 0: mic is igno
 MIN_WORDS = int(os.environ.get("ANSWER_MIN_WORDS", "6"))         # shorter pieces ("Uh.", "Hello.") wait for more
 END_PAUSE_S = float(os.environ.get("ANSWER_END_PAUSE_SECS", "2.5"))   # pause after a real answer before it is used
 SHORT_ANSWER_WAIT_S = float(os.environ.get("SHORT_ANSWER_WAIT_SECS", "8"))  # "I don't know." is accepted after this
+# 0 (default): ANSWER_ASSESSMENT runs after the interview, so the live part only competes with FOLLOWUP for the Mac
+ASSESS_LIVE = os.environ.get("ASSESS_DURING_INTERVIEW", "0") == "1"
 REPORTS = HERE / "reports"
 TRANSPORT = "?"
 GREETING = ("Hello, and thank you for joining. I will ask you a few questions. "
@@ -178,6 +180,7 @@ class InterviewDirector(FrameProcessor):
         self.turns: list[dict] = []
         self.assessments: list[asyncio.Task] = []
         self.session = datetime.now().strftime("%H%M%S")
+        self.pending_assess: list[tuple] = []
         self.pieces: list[str] = []          # speech pieces of the answer being collected
         self.asking = False                  # a question was pushed; waiting for it to be spoken
         self.asked_started = False
@@ -288,8 +291,11 @@ class InterviewDirector(FrameProcessor):
             turn = {"n": len(self.turns) + 1, "kind": self.kind, "question": q["text"], "answer": answer}
             self.turns.append(turn)
             await self.event("answer", turn=turn["n"], kind=self.kind, text=answer)
-            # ANSWER_ASSESSMENT in the background (slow; the candidate does not wait for it)
-            self.assessments.append(asyncio.create_task(self._assess(tid, q, self.kind, turn)))
+            # ANSWER_ASSESSMENT: after the interview by default (see ASSESS_LIVE); the candidate never waits for it
+            if ASSESS_LIVE:
+                self.assessments.append(asyncio.create_task(self._assess(tid, q, self.kind, turn)))
+            else:
+                self.pending_assess.append((tid, q, self.kind, turn))
             decision = None
             if self.kind == "MAIN" and self.followups < MAX_FOLLOWUPS:
                 t0 = time.monotonic()
@@ -334,11 +340,17 @@ class InterviewDirector(FrameProcessor):
     async def finish(self) -> None:
         self.done = True
         await self.say(CLOSING)
+        own = aiohttp.ClientSession()              # survives the call ending (the pipeline's session is closed)
+        self.http = own
         await self.event("finishing")
+        for args in self.pending_assess:            # one at a time: the LLM serves one request at a time anyway
+            try:
+                await self._assess(*args)
+            except Exception as e:  # noqa: BLE001
+                args[3]["assessmentError"] = str(e)
         await asyncio.gather(*self.assessments, return_exceptions=True)
         ids = [t["evalId"] for t in self.turns if t.get("evalId")]
-        async with aiohttp.ClientSession() as own:          # survives the call ending (pipeline session is closed)
-            self.http = own
+        async with own:
             report = (await self._post("/api/report", {"evalIds": ids})) if ids else {"error": "no assessed answers"}
             REPORTS.mkdir(exist_ok=True)
             stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
