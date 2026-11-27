@@ -88,6 +88,7 @@ td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
     <button class="step" data-p="tts">5 · Text to speech</button>
     <button class="step" data-p="eval">6 · Answer evaluation</button>
     <button class="step" data-p="report">7 · Final report</button>
+    <button class="step" data-p="live">8 · Live interview</button>
   </nav>
 
   <div id="page-parse">
@@ -133,6 +134,17 @@ td input,td select{min-width:70px;padding:5px 6px;font-size:13.5px}
   <div id="page-match" class="hidden">
     <section class="panel">
       <div id="matchCv" class="small muted" style="margin-bottom:12px"></div>
+      <div class="panel" style="margin:0 0 14px 0">
+        <h2 style="margin-top:0">Job description</h2>
+        <div class="small muted">Upload the JD (.pdf, .docx, .doc or .txt). The model drafts the job and requirements below; review and edit them, then run CV_MATCH. (Drafting is a dev-tool step; in production the rubric comes from core.)</div>
+        <div class="row">
+          <input type="file" id="jdFile" accept=".pdf,.docx,.doc,.txt">
+          <button id="jdDraft">Read JD &amp; draft requirements</button>
+          <span id="jdBusy" class="muted small hidden"><span class="spinner"></span> Reading JD… ~20–60 s</span>
+        </div>
+        <div id="jdMsg" class="small" style="margin-top:8px"></div>
+        <details id="jdTextBox" class="hidden" style="margin-top:8px"><summary class="small">Extracted JD text</summary><pre id="jdText" style="white-space:pre-wrap;max-height:260px;overflow:auto"></pre></details>
+      </div>
       <div class="row" style="margin-top:0">
         <label style="flex:1">Job title <input type="text" id="jobTitle"></label>
         <label>Min years <input type="number" id="minY" min="0" step="0.5"></label>
@@ -324,6 +336,47 @@ Describes the outcome or impact</textarea>
       <div class="panel" id="reportBody"></div>
     </section>
   </div>
+
+  <div id="page-live" class="hidden">
+    <section class="panel">
+      <h2 style="margin-top:0">Live voice interview</h2>
+      <div class="small muted">Speak to the AI interviewer. Silero VAD → Nemotron 3.5 ASR streaming → Smart Turn v3 → FOLLOWUP / ANSWER_ASSESSMENT (local Qwen) → Qwen3-TTS. Use headphones so it does not hear itself. Speaking while it talks interrupts it.</div>
+      <div class="chips" id="liveStatus" style="margin-top:10px"></div>
+      <div class="row">
+        <button id="liveOpen">🎤 Start interview</button>
+        <button class="ghost" id="liveMute" disabled>Mute mic</button>
+        <button class="ghost" id="liveClose" disabled>End interview</button>
+        <span id="liveHint" class="small muted"></span>
+      </div>
+    </section>
+    <div style="display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,1.2fr);gap:16px">
+      <section class="panel" style="margin:0">
+        <h2 style="margin-top:0">Voice</h2>
+        <div id="liveFrameBox" class="small muted">Click <b>🎤 Start interview</b>. Your browser asks for the microphone once; then just speak.</div>
+        <div id="liveVoice" class="hidden" style="margin-top:12px">
+          <div class="small"><span id="liveConn" class="chip">idle</span></div>
+          <div style="margin-top:14px" class="small muted">Your microphone</div>
+          <div style="height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:4px"><div id="liveMicBar" style="height:100%;width:0;background:var(--ok);transition:width .08s"></div></div>
+          <div style="margin-top:12px" class="small muted">Interviewer</div>
+          <div style="height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:4px"><div id="liveBotBar" style="height:100%;width:0;background:#4f7cff;transition:width .08s"></div></div>
+          <div id="liveSpeaking" class="small" style="margin-top:12px;min-height:20px"></div>
+          <audio id="liveAudio" autoplay playsinline></audio>
+        </div>
+      </section>
+      <section class="panel" style="margin:0">
+        <h2 style="margin-top:0">Live turns <span class="muted small" id="liveSession"></span></h2>
+        <div id="liveTurns" class="small muted">Nothing yet.</div>
+      </section>
+    </div>
+    <section class="panel" style="margin-top:16px">
+      <h2 style="margin-top:0">Interview report</h2>
+      <div class="row" style="margin-top:0">
+        <select id="liveReportPick"></select>
+        <button class="ghost" id="liveReportLoad">Show</button>
+      </div>
+      <div id="liveReport" class="small muted" style="margin-top:10px">The report appears here when an interview ends (about 1–2 min after the closing line).</div>
+    </section>
+  </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -428,7 +481,8 @@ function render(d){
 // ---------- step navigation ----------
 document.querySelectorAll(".step").forEach(b => b.onclick = () => {
   document.querySelectorAll(".step").forEach(x => x.classList.toggle("on", x === b));
-  ["parse","match","stt","plan","tts","eval","report"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
+  ["parse","match","stt","plan","tts","eval","report","live"].forEach(p => $("page-"+p).classList.toggle("hidden", p !== b.dataset.p));
+  if(b.dataset.p === "live") liveEnter();
   if(b.dataset.p === "match") refreshMatchCv();
   if(b.dataset.p === "plan") refreshPlanCv();
   if(b.dataset.p === "eval") refreshEval();
@@ -461,6 +515,209 @@ function loadSample(){
    {code:"R4",category:"SKILL",type:"PREFERRED",text:"Kubernetes in production",skillName:"Kubernetes",weight:1},
    {code:"R5",category:"SKILL",type:"PREFERRED",text:"Integrating LLMs into applications",skillName:"Large Language Models",weight:2},
    {code:"R6",category:"SKILL",type:"PREFERRED",text:"Experience with AWS cloud services",skillName:"AWS",weight:1}].forEach(reqRow);
+}
+$("jdDraft").onclick = async () => {
+  const f = $("jdFile").files[0];
+  if(!f){ $("jdMsg").innerHTML = `<span style="color:var(--bad)">Choose a job description file first.</span>`; return; }
+  const ext = f.name.split(".").pop().toLowerCase();
+  $("jdDraft").disabled = true; $("jdBusy").classList.remove("hidden"); $("jdMsg").textContent = "";
+  try{
+    const r = await fetch(`/api/jd/draft?ext=${encodeURIComponent(ext)}&provider=${encodeURIComponent($("matchProvider").value)}`,
+                          {method:"POST", body: await f.arrayBuffer()});
+    const d = await r.json();
+    if(d.jdText){ $("jdText").textContent = d.jdText; $("jdTextBox").classList.remove("hidden"); }
+    const rb = d.rubric;
+    if(rb){
+      $("jobTitle").value = rb.title || ""; $("jobSummary").value = rb.summary || "";
+      $("minY").value = rb.experienceMinMonths == null ? "" : +(rb.experienceMinMonths / 12).toFixed(1);
+      $("maxY").value = rb.experienceMaxMonths == null ? "" : +(rb.experienceMaxMonths / 12).toFixed(1);
+      $("reqTable").tBodies[0].innerHTML = "";
+      rb.requirements.forEach(reqRow);
+    }
+    if(!r.ok) throw new Error(d.error || r.statusText);
+    $("jdMsg").innerHTML = `<span style="color:var(--ok)">Drafted ${rb.requirements.length} requirements from <b>${esc(f.name)}</b> in ${d.seconds}s. Review and edit them, then run CV_MATCH.</span>`;
+  }catch(e){
+    $("jdMsg").innerHTML = `<span style="color:var(--bad)">${esc(e.message)}</span>`;
+  }finally{ $("jdDraft").disabled = false; $("jdBusy").classList.add("hidden"); }
+};
+// ---------- 8 · Live interview ----------
+const live = {seq: 0, session: null, turns: {}, order: [], timer: null};
+async function liveEnter(){
+  liveStatus(); liveReports();
+  if(!live.timer) live.timer = setInterval(livePoll, 1000);
+}
+async function liveStatus(){
+  try{
+    const s = await (await fetch("/api/live/status")).json();
+    const names = {stt:"Nemotron STT :8091", tts:"Qwen3-TTS :8092", webrtc:"Pipecat bot :7860"};
+    $("liveStatus").innerHTML = Object.entries(names).map(([k,n]) => `<span class="chip${s[k] ? "" : " warn"}">${s[k] ? "●" : "○"} ${n}</span>`).join("");
+    const need = ["stt","tts","webrtc"];
+    const missing = need.filter(k => !s[k]);
+    $("liveHint").innerHTML = missing.length ? `<span style="color:var(--bad)">Not running: ${missing.map(k => names[k]).join(", ")}. Start with <code>tools/live_voice/start.sh</code>.</span>` : "";
+    return missing.length === 0;
+  }catch(e){ return false; }
+}
+// The browser talks only to this server (same origin); it proxies the WebRTC offer to the Pipecat bot.
+const vc = {pc: null, mic: null, ctx: null, raf: null, muted: false};
+function liveConn(text, bad){ $("liveConn").textContent = text; $("liveConn").className = "chip" + (bad ? " warn" : ""); }
+function meter(stream, bar){
+  vc.ctx = vc.ctx || new AudioContext();
+  const an = vc.ctx.createAnalyser(); an.fftSize = 512;
+  vc.ctx.createMediaStreamSource(stream).connect(an);
+  const buf = new Uint8Array(an.fftSize);
+  return () => { an.getByteTimeDomainData(buf); let m = 0; for(const v of buf) m = Math.max(m, Math.abs(v - 128));
+                 $(bar).style.width = Math.min(100, m / 128 * 300) + "%"; return m; };
+}
+function startMeters(micStream, botStream){
+  const mic = meter(micStream, "liveMicBar"), bot = botStream ? meter(botStream, "liveBotBar") : () => 0;
+  const tick = () => { const m = mic(), b = bot();
+    $("liveSpeaking").innerHTML = b > 8 ? "🔊 Interviewer is speaking…" : (m > 10 && !vc.muted ? "🎙️ You are speaking…" : "<span class='muted'>Listening…</span>");
+    vc.raf = requestAnimationFrame(tick); };
+  cancelAnimationFrame(vc.raf); tick();
+}
+async function connectWebRTC(mic){
+  const pc = vc.pc = new RTCPeerConnection();
+  mic.getTracks().forEach(t => pc.addTrack(t, mic));
+  pc.ontrack = ev => { if(ev.track.kind === "audio"){ const s = ev.streams[0] || new MediaStream([ev.track]);
+                                                      $("liveAudio").srcObject = s; startMeters(mic, s); } };
+  pc.onconnectionstatechange = () => liveConn("WebRTC: " + pc.connectionState, ["failed","disconnected"].includes(pc.connectionState));
+  await pc.setLocalDescription(await pc.createOffer());
+  await new Promise(r => { if(pc.iceGatheringState === "complete") return r();
+    pc.addEventListener("icegatheringstatechange", () => pc.iceGatheringState === "complete" && r()); setTimeout(r, 3000); });
+  const res = await fetch("/api/live/offer", {method:"POST", headers:{"Content-Type":"application/json"},
+                                              body: JSON.stringify({sdp: pc.localDescription.sdp, type: pc.localDescription.type})});
+  const ans = await res.json();
+  if(!res.ok || !ans.sdp) throw new Error(ans.error || "no answer from the bot");
+  await pc.setRemoteDescription({sdp: ans.sdp, type: ans.type});
+}
+$("liveOpen").onclick = async () => {
+  if(!(await liveStatus())) return;
+  live.session = null; live.turns = {}; live.order = []; $("liveTurns").textContent = "Waiting for the interviewer…"; $("liveSession").textContent = "";
+  $("liveOpen").disabled = true;
+  try{
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+      throw Object.assign(new Error("This browser does not allow microphone access on this page. Open http://127.0.0.1:8765 or http://localhost:8765 directly in Chrome, Edge or Safari."), {name: "NoMediaDevices"});
+    const inputs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "audioinput");
+    if(!inputs.length)
+      throw Object.assign(new Error("No microphone is connected to this computer."), {name: "NotFoundError"});
+    try{
+      // preferred: echo cancellation etc. ("ideal" so a browser that cannot do one of them still gives the mic)
+      vc.mic = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: {ideal: true}, noiseSuppression: {ideal: true}, autoGainControl: {ideal: true}}});
+    }catch(e){
+      if(e.name === "NotAllowedError" || e.name === "SecurityError") throw e;
+      vc.mic = await navigator.mediaDevices.getUserMedia({audio: true});     // fallback: plain microphone
+    }
+  }catch(e){
+    $("liveOpen").disabled = false;
+    const why = (e.name === "NotAllowedError" || e.name === "SecurityError")
+      ? "Microphone permission was denied. Allow the microphone for this page (address-bar icon) and try again."
+      : (e.name === "NotFoundError" || e.name === "OverconstrainedError")
+        ? "No usable microphone. A Mac mini has no built-in mic: connect a headset, USB mic or AirPods (or use an iPhone as a Continuity mic), select it under System Settings → Sound → Input, then reload this page."
+      : e.name === "NotReadableError" ? "The microphone is in use by another app (Zoom, Teams…). Close it and try again."
+      : "";
+    $("liveFrameBox").classList.remove("hidden");
+    $("liveFrameBox").innerHTML = `<span style="color:var(--bad)">Could not open the microphone (${esc(e.name || "")}: ${esc(e.message)}). ${why}</span>`;
+    return;
+  }
+  $("liveFrameBox").classList.add("hidden"); $("liveVoice").classList.remove("hidden");
+  liveConn("connecting…");
+  try{
+    await connectWebRTC(vc.mic);
+    $("liveMute").disabled = false; $("liveClose").disabled = false;
+  }catch(e){ liveConn("Error: " + e.message, true); liveStop(); }
+};
+function liveStop(){
+  cancelAnimationFrame(vc.raf);
+  try{ vc.pc && vc.pc.close(); }catch(e){}
+  vc.mic && vc.mic.getTracks().forEach(t => t.stop());
+  vc.pc = vc.mic = null; vc.muted = false;
+  $("liveMute").textContent = "Mute mic"; $("liveMute").disabled = true; $("liveClose").disabled = true; $("liveOpen").disabled = false;
+  $("liveMicBar").style.width = $("liveBotBar").style.width = "0";
+}
+$("liveMute").onclick = () => { vc.muted = !vc.muted; vc.mic.getAudioTracks().forEach(t => t.enabled = !vc.muted);
+                                $("liveMute").textContent = vc.muted ? "Unmute mic" : "Mute mic"; };
+$("liveClose").onclick = () => { liveStop(); liveConn("ended"); $("liveSpeaking").textContent = "Interview ended. The report appears below when it is ready."; };
+function liveTurn(n){ if(!live.turns[n]){ live.turns[n] = {n}; live.order.push(n); } return live.turns[n]; }
+async function livePoll(){
+  if($("page-live").classList.contains("hidden")) return;
+  let evs = [];
+  try{ evs = (await (await fetch("/api/live/events?since=" + live.seq)).json()).events; }catch(e){ return; }
+  for(const e of evs){
+    live.seq = e.seq;
+    if(e.type === "started"){ live.session = e.session; live.turns = {}; live.order = []; live.pendingQ = null;
+      $("liveSession").textContent = `· session ${e.session} · ${e.transport}`; }
+    if(e.session !== live.session) continue;
+    if(e.type === "question"){ live.pendingQ = {text: e.text, kind: e.kind, at: e.at}; live.partial = ""; }
+    if(e.type === "partial") live.partial = e.text;
+    if(e.type === "answer"){ const t = liveTurn(e.turn); t.kind = e.kind; t.q = live.pendingQ; t.answer = e.text; t.at = e.at; live.pendingQ = null; live.partial = ""; }
+    if(e.type === "decision"){ const t = liveTurn(e.turn); t.decision = `${e.decision} (${e.reason}, ${e.seconds}s)`; }
+    if(e.type === "assessment"){ const t = liveTurn(e.turn); t.scores = e.error ? `failed: ${e.error}` : e.scores.map(s => `${s.code} ${s.score ?? "–"}`).join(" · "); }
+    if(e.type === "finishing") live.finishing = true;
+    if(e.type === "report"){ live.finishing = false; await liveReports(e.name); liveShowReport(e.name); }
+  }
+  if(evs.length) liveRender();
+}
+function liveRender(){
+  const rows = live.order.map(n => live.turns[n]).map(t => `
+    <div style="border-top:1px solid var(--line);padding:8px 0">
+      <div><b>T${t.n}</b> <span class="chip">${esc(t.kind || "")}</span> <span class="muted">${esc(t.at || "")}</span></div>
+      <div style="margin-top:4px"><span class="muted">AI:</span> ${esc((t.q || {}).text || "")}</div>
+      <div style="margin-top:4px"><span class="muted">Candidate (STT):</span> ${esc(t.answer || "")}</div>
+      <div style="margin-top:4px"><span class="muted">Follow-up decision:</span> ${esc(t.decision || (t.kind === "MAIN" ? "…" : "—"))}</div>
+      <div style="margin-top:4px"><span class="muted">Assessment:</span> ${esc(t.scores || "running…")}</div>
+    </div>`).join("");
+  const pend = live.pendingQ ? `<div style="border-top:1px solid var(--line);padding:8px 0"><span class="muted">AI is asking (${esc(live.pendingQ.kind)}):</span> ${esc(live.pendingQ.text)}<br><span class="muted">${live.partial ? "Hearing: </span>" + esc(live.partial) + " <span class='muted'>(keep going — it waits for a pause)</span>" : "… listening</span>"}</div>` : "";
+  const fin = live.finishing ? `<div class="banner" style="margin-top:8px">Interview finished: waiting for the last assessments and FINAL_REPORT…</div>` : "";
+  $("liveTurns").innerHTML = (rows + pend + fin) || "Waiting for the interviewer…";
+}
+async function liveReports(select){
+  try{
+    const r = (await (await fetch("/api/live/reports")).json()).reports;
+    $("liveReportPick").innerHTML = r.length ? r.map(n => `<option${n === select ? " selected" : ""}>${n}</option>`).join("") : "<option value=''>no reports yet</option>";
+  }catch(e){}
+}
+$("liveReportLoad").onclick = () => $("liveReportPick").value && liveShowReport($("liveReportPick").value);
+async function liveShowReport(name){
+  const d = await (await fetch("/api/live/report?name=" + encodeURIComponent(name))).json();
+  if(d.error && !d.turns){ $("liveReport").textContent = d.error; return; }
+  const rep = d.report || {}, cs = d.computedScores || {};
+  const comp = (cs.competencies || []).map(c => `<tr><td>${esc(c.code)}</td><td>${c.score ?? "–"}</td><td>${c.assessedTurnCount}</td></tr>`).join("");
+  const narr = (rep.competencyNarratives || []).map(n => `<li><b>${esc(n.competencyCode)}</b>: ${esc(n.narrative || "")}</li>`).join("");
+  const list = (k) => (rep[k] || []).map(x => `<li>${esc(typeof x === "string" ? x : (x.text || x.description || JSON.stringify(x)))}</li>`).join("");
+  $("liveReport").innerHTML = `
+    <div class="banner ${d.reportError ? "bad" : "ok"}">${esc(name)} · ${d.reportError ? "FINAL_REPORT failed: " + esc(d.reportError) : `overall ${cs.overallScore ?? "–"} · ${esc(cs.completionState || "")} · ${esc(cs.evidenceLevel || "")}`}</div>
+    <p style="color:var(--ink)">${esc(rep.summary || "")}</p>
+    <div class="tablewrap"><table><thead><tr><th>Competency</th><th>Score (core stand-in)</th><th>Turns</th></tr></thead><tbody>${comp}</tbody></table></div>
+    ${narr ? `<h3>Competency narratives</h3><ul>${narr}</ul>` : ""}
+    ${list("strengths") ? `<h3>Strengths</h3><ul>${list("strengths")}</ul>` : ""}
+    ${list("gaps") ? `<h3>Gaps</h3><ul>${list("gaps")}</ul>` : ""}
+    ${list("reviewerFocusAreas") ? `<h3>For the reviewer to probe</h3><ul>${list("reviewerFocusAreas")}</ul>` : ""}
+    ${list("limitations") ? `<h3>Limitations of this evidence</h3><ul>${list("limitations")}</ul>` : ""}
+    <h3>Answer by answer</h3>
+    <div class="small muted">What the candidate said, and how they approached it (reasoning, specifics, own role, outcome), with the exact words the scores rest on. Per the spec, accent, pace, pauses, filler words and grammar are never judged.</div>
+    ${d.turns.map(liveTurnDetail).join("")}
+    <details style="margin-top:8px"><summary>Full report JSON</summary><pre style="white-space:pre-wrap">${esc(JSON.stringify(rep, null, 1))}</pre></details>`;
+}
+function liveTurnDetail(t){
+  const a = t.assessment || {};
+  const scores = (a.scores || []).map(s => `
+      <div style="margin:8px 0 0 0;padding:8px 10px;border-left:3px solid var(--line)">
+        <b>${esc(s.competencyCode)}</b>: ${s.score == null ? `<span class="muted">not assessed (${esc(s.notAssessedReason || "no evidence")})</span>` : `<b>${s.score}/5</b>`}
+        ${s.confidence ? `<span class="chip">${esc(s.confidence)} confidence</span>` : ""}
+        <div style="margin-top:4px"><span class="muted">How they approached it:</span> ${esc(s.rationale || "")}</div>
+        ${(s.evidence || []).length ? `<div style="margin-top:4px"><span class="muted">Their words:</span> ${(s.evidence || []).map(e => `“${esc(e.quote)}”`).join(" · ")}</div>` : ""}
+      </div>`).join("");
+  const claims = (a.candidateReportedClaims || []).map(c => `<li>${esc(c.claim)} <span class="muted">(candidate's own claim, not verified)</span></li>`).join("");
+  const flags = (a.answerFlags || []).map(f => `<span class="chip warn">${esc(f)}</span>`).join(" ");
+  return `
+    <div class="panel" style="margin-top:10px">
+      <div><b>T${t.n}</b> <span class="chip">${esc(t.kind)}</span> ${flags}</div>
+      <div style="margin-top:6px"><span class="muted">Question:</span> ${esc(t.question)}</div>
+      <div style="margin-top:6px"><span class="muted">What they said (transcript):</span> ${esc(t.answer)}</div>
+      ${t.followup ? `<div style="margin-top:6px"><span class="muted">Follow-up decision:</span> ${esc(((t.followup.decision || {}).decision) || "")} ${esc(((t.followup.decision || {}).reasonCode) || "")}</div>` : ""}
+      ${scores || `<div style="margin-top:6px;color:var(--bad)">Assessment failed: ${esc(t.assessmentError || "unknown")}</div>`}
+      ${claims ? `<div style="margin-top:6px"><span class="muted">Claims made:</span><ul>${claims}</ul></div>` : ""}
+    </div>`;
 }
 $("addReq").onclick = () => reqRow();
 $("sampleJob").onclick = loadSample;
