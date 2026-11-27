@@ -131,6 +131,19 @@ def test_normalise_pages():
     assert "microservices fast" in out[0]
 
 
+def test_normalise_two_pages_keeps_body_text():
+    """Regression: on a 2-page document every line is on >= 50 % of pages; only lines on both pages are headers."""
+    pages = ["Jane Doe CV\nPython developer at Acme\nSkills: Python, SQL", "Jane Doe CV\nEducation: B.Tech 2019"]
+    out = normalise_pages(pages)
+    joined = "\n".join(out)
+    assert "Python developer at Acme" in joined and "Education: B.Tech 2019" in joined
+    assert "Jane Doe CV" not in joined
+
+
+def test_normalise_single_page_unchanged_lines():
+    assert normalise_pages(["Only page\nline two"]) == ["Only page\nline two"]
+
+
 def test_non_english_ratio():
     assert non_english_ratio("Java Kafka Docker") == 0
     assert non_english_ratio("जावा काफ्का Docker") > 0.5

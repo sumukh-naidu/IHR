@@ -1,0 +1,14 @@
+[
+ {"text": "Tell me about a project where you integrated a language model into a backend service. What was your own part in it?",
+  "competencyCodes": ["PRACTICAL_EXPERIENCE", "TECHNICAL_SKILL"],
+  "expectedAnswerRubric": {"keyPoints": ["Describes the project's purpose", "States own decisions and actions", "Describes the outcome or impact"],
+                           "strongSignals": ["Names concrete design choices and why"], "weakSignals": ["Describes only team work without own role"]}},
+ {"text": "Your service starts returning 503 errors at peak traffic. How would you investigate and fix it?",
+  "competencyCodes": ["PROBLEM_SOLVING", "TECHNICAL_SKILL"],
+  "expectedAnswerRubric": {"keyPoints": ["Gathers evidence before acting", "Identifies a plausible root cause", "Proposes a concrete fix and verification"],
+                           "strongSignals": ["Mentions metrics, logs or profiling"], "weakSignals": ["Jumps to a fix without investigation"]}},
+ {"text": "How would you explain the limits of an AI feature to a product manager who expects it to be always right?",
+  "competencyCodes": ["COMMUNICATION"],
+  "expectedAnswerRubric": {"keyPoints": ["Explains the limitation in plain language", "Proposes safeguards"],
+                           "strongSignals": ["Uses a concrete example"], "weakSignals": ["Uses jargon without explanation"]}}
+]
